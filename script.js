@@ -1,4 +1,4 @@
-// ⚠️ ใส่ LIFF ID ตรงนี้
+// ⚠️ LIFF ID (ใส่ไว้เหมือนเดิม ไม่เสียหายครับ เผื่ออนาคตใช้ดึงโปรไฟล์แอดมิน)
 const LIFF_ID = "2008984741-8hcXjikx"; 
 
 // ---- Data (ชุดเดิมของคุณ) ----
@@ -136,7 +136,6 @@ function openReceipt(){ $("#billContent").innerHTML=buildReceiptHTML(); $("#bill
 function closeReceipt(){ $("#billModal").classList.remove("open"); }
 async function copyReceipt(){ await navigator.clipboard.writeText($("#billContent").innerText); }
 function buildReceiptHTML(){
-    // (ขออนุญาตย่อ Code เดิมส่วนนี้นะครับ แต่มันทำงานเหมือนเดิมเป๊ะ)
     const now=new Date();
     let html=`<div class="meta">วันที่ ${now.toLocaleDateString('th-TH')}</div><table><thead><tr><th>รายการ</th><th>ยอด</th></tr></thead><tbody>`;
     let sub=0;
@@ -161,51 +160,63 @@ function buildReceiptHTML(){
 }
 
 // --------------------------------------------------------
-// 🔥 ส่วนที่เพิ่มใหม่: ส่ง Flex Message (เชื่อมกับโค้ดเดิม)
+// 🔥 ส่วนที่แก้ไข: ดึงรายชื่อลูกค้า + ให้บอทส่ง Flex Message
 // --------------------------------------------------------
 
-async function sendFlexBill() {
-    if (!liff.isLoggedIn()) { liff.login(); return; }
+// 1. ฟังก์ชันโหลดรายชื่อลูกค้าจาก Google Sheet
+function loadCustomers() {
+  google.script.run.withSuccessHandler(function(customers) {
+    var select = document.getElementById("customerSelect");
+    select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
+    customers.forEach(function(c) {
+      var option = document.createElement("option");
+      option.value = c.id;
+      option.text = c.name;
+      select.add(option);
+    });
+  }).getCustomerList();
+}
 
-    // 1. ดึงข้อมูลจากตารางเดิมของคุณ (input.qty)
+// 2. ฟังก์ชันส่งบิล (OA เป็นคนส่ง)
+function sendFlexBill() {
+    // เช็คว่าเลือกลูกค้าหรือยัง
+    var customerId = $("#customerSelect").value;
+    var customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
+
+    if (!customerId) {
+        Swal.fire('แจ้งเตือน', 'กรุณาเลือกลูกค้าที่จะส่งบิลก่อนครับ', 'warning');
+        return;
+    }
+
+    // สร้างเนื้อหาบิล
     let itemContents = [];
     const animals = getSelectedAnimals();
     
     animals.forEach(a => {
         DATA[a].forEach(([size]) => {
-            // ดึงค่าจาก Input เดิม
             const f = document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="fresh"]`);
             const z = document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="frozen"]`);
-            
             const unit = parseFloat(f?.dataset.unit || z?.dataset.unit || 0);
             
             const qf = parseInt(f?.value || 0, 10) || 0;
-            if (qf > 0) {
-                const total = qf * unit;
-                itemContents.push(createFlexRow(animalLabel(a), `${size} (แช่)`, qf, total));
-            }
+            if (qf > 0) itemContents.push(createFlexRow(animalLabel(a), `${size} (แช่)`, qf, qf * unit));
 
             const qz = parseInt(z?.value || 0, 10) || 0;
-            if (qz > 0) {
-                const total = qz * unit;
-                itemContents.push(createFlexRow(animalLabel(a), `${size} (เป็น)`, qz, total));
-            }
+            if (qz > 0) itemContents.push(createFlexRow(animalLabel(a), `${size} (เป็น)`, qz, qz * unit));
         });
     });
 
     if (itemContents.length === 0) {
-        alert("กรุณาเลือกสินค้าก่อนครับ");
+        Swal.fire('แจ้งเตือน', 'กรุณาระบุจำนวนสินค้าอย่างน้อย 1 รายการ', 'warning');
         return;
     }
 
-    // 2. ดึงค่าส่ง & ส่วนลด จากหน้าจอเดิม
+    // เพิ่มค่าส่ง & ส่วนลด
     const ship = parseFloat($("#shipCost").value || 0);
     const shipMethod = $("#shipMethod").value;
-    if (ship > 0) {
-        itemContents.push(createFlexRow("ค่าส่ง", shipMethod, "", ship));
-    }
+    if (ship > 0) itemContents.push(createFlexRow("ค่าส่ง", shipMethod, "", ship));
 
-    const discountStr = $("#promoTotal").innerText; // อ่านค่าที่คำนวณแล้วจากหน้าจอ
+    const discountStr = $("#promoTotal").innerText;
     if (discountStr !== "0") {
         itemContents.push({
             "type": "box", "layout": "baseline",
@@ -216,47 +227,48 @@ async function sendFlexBill() {
         });
     }
 
-    // 3. สร้าง Flex Message (ตามแม่แบบคุณ)
     const grandTotal = $("#grandTotal").innerText;
-    
+
+    // สร้าง JSON Message
     const flexMessage = {
-        "type": "flex",
-        "altText": "บิลแจ้งยอดชำระ Big Mouse",
-        "contents": {
-            "type": "bubble",
-            "header": {
-                "type": "box", "layout": "vertical",
-                "contents": [{ "type": "image", "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png", "margin": "md", "size": "sm" }]
-            },
-            "body": {
-                "type": "box", "layout": "vertical",
-                "contents": [
-                    { "type": "text", "text": "บิลแจ้งยอดชำระ", "weight": "bold", "size": "xl" },
-                    { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "วันที่:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": new Date().toLocaleDateString('th-TH'), "color": "#666666", "size": "sm", "flex": 5 } ] },
-                        { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": "คุณลูกค้าคนพิเศษ", "color": "#666666", "size": "sm", "flex": 5 } ] }
-                    ]},
-                    { "type": "separator", "margin": "xxl" },
-                    { "type": "box", "layout": "vertical", "margin": "xxl", "spacing": "sm", "contents": itemContents },
-                    { "type": "separator", "margin": "xxl" },
-                    { "type": "box", "layout": "horizontal", "margin": "md", "contents": [
-                        { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold" },
-                        { "type": "text", "text": grandTotal + " ฿", "size": "xl", "color": "#111111", "align": "end", "weight": "bold" }
-                    ]}
-                ]
-            },
-            "footer": {
-                "type": "box", "layout": "vertical", "spacing": "sm",
-                "contents": [{ "type": "button", "style": "primary", "height": "sm", "color": "#06c755", "action": { "type": "uri", "label": "แจ้งโอนเงิน", "uri": "https://line.me/ti/p/..." } }] // ⚠️ ใส่ลิงก์ไลน์
-            }
+        "type": "bubble",
+        "header": {
+            "type": "box", "layout": "vertical",
+            "contents": [{ "type": "image", "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png", "margin": "md", "size": "sm" }]
+        },
+        "body": {
+            "type": "box", "layout": "vertical",
+            "contents": [
+                { "type": "text", "text": "บิลแจ้งยอดชำระ", "weight": "bold", "size": "xl" },
+                { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
+                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "วันที่:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": new Date().toLocaleDateString('th-TH'), "color": "#666666", "size": "sm", "flex": 5 } ] },
+                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": customerName, "color": "#666666", "size": "sm", "flex": 5 } ] }
+                ]},
+                { "type": "separator", "margin": "xxl" },
+                { "type": "box", "layout": "vertical", "margin": "xxl", "spacing": "sm", "contents": itemContents },
+                { "type": "separator", "margin": "xxl" },
+                { "type": "box", "layout": "horizontal", "margin": "md", "contents": [
+                    { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold" },
+                    { "type": "text", "text": grandTotal + " ฿", "size": "xl", "color": "#111111", "align": "end", "weight": "bold" }
+                ]}
+            ]
+        },
+        "footer": {
+            "type": "box", "layout": "vertical", "spacing": "sm",
+            "contents": [{ "type": "button", "style": "primary", "height": "sm", "color": "#06c755", "action": { "type": "uri", "label": "แจ้งโอนเงิน", "uri": "https://line.me/ti/p/@450tzdfe" } }] // ⚠️ อย่าลืมแก้ลิงก์ตรงนี้
         }
     };
 
-    if (liff.isApiAvailable('shareTargetPicker')) {
-        liff.shareTargetPicker([flexMessage]).then(() => alert("ส่งบิลเรียบร้อย!")).catch(e => alert(e));
-    } else {
-        alert("กรุณาเปิดใน LINE บนมือถือ");
-    }
+    // ส่งให้ Backend จัดการ (ส่งผ่าน OA)
+    Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+    
+    google.script.run.withSuccessHandler(function(res) {
+        if (res.status === 'success') {
+            Swal.fire('สำเร็จ!', 'บอทส่งบิลเรียบร้อยแล้วครับ', 'success');
+        } else {
+            Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + res.message, 'error');
+        }
+    }).sendFlexMessageToUser(customerId, flexMessage);
 }
 
 // Helper สร้างแถวรายการ
@@ -284,7 +296,7 @@ function wireEvents(){
   $("#promoValue").addEventListener('input',recalc);
   $("#copyBtn").addEventListener('click',async()=>{
     await navigator.clipboard.writeText($("#messageBox").textContent);
-    alert('คัดลอกข้อความแล้ว');
+    Swal.fire({ icon: 'success', title: 'คัดลอกข้อความแล้ว', timer: 1500, showConfirmButton: false });
   });
   
   // ปุ่มดูบิล
@@ -294,7 +306,7 @@ function wireEvents(){
   $("#billCopy").addEventListener('click',copyReceipt);
   document.querySelector('#billModal .modal-backdrop').addEventListener('click',closeReceipt);
 
-  // 🔥 ปุ่มใหม่: ส่งไลน์
+  // ปุ่มส่งไลน์ (เชื่อมกับฟังก์ชันใหม่)
   const lineBtn = document.getElementById('sendLineFlexBtn');
   if(lineBtn) lineBtn.addEventListener('click', sendFlexBill);
 }
@@ -303,8 +315,9 @@ function wireEvents(){
 document.addEventListener('DOMContentLoaded', async () => {
   buildTable();
   wireEvents();
+  loadCustomers(); // 🔥 เรียกโหลดชื่อลูกค้าทันทีที่เปิดเว็บ
   
-  // Init LIFF
+  // Init LIFF (เผื่อใช้ในอนาคต)
   try {
       await liff.init({ liffId: LIFF_ID });
   } catch (err) { console.error(err); }
