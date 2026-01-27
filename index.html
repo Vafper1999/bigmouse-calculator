@@ -110,11 +110,12 @@
             </div>
 
             <div class="msg" id="messageBox"></div>
+            
             <div class="row" style="flex-wrap: wrap; gap: 5px;">
               <button class="btn" id="copyBtn">คัดลอกข้อความ</button>
               <button class="btn btn-secondary" id="showReceiptBtn">ดูใบเสร็จ</button>
               
-              <button class="btn" id="sendLineFlexBtn" onclick="sendBill()" style="width:100%; background-color:#06c755; margin-top:5px;">🚀 ส่งบิลเข้า LINE (OA)</button>
+              <button class="btn" id="sendLineFlexBtn" style="width:100%; background-color:#06c755; margin-top:5px;">🚀 ส่งบิลเข้า LINE (OA)</button>
               
               <span class="hint" id="copyHint" style="width:100%; text-align:center;">—</span>
             </div>
@@ -164,90 +165,5 @@
   </div>
 
   <script src="script.js"></script>
-
-  <script>
-    // 1. โหลดรายชื่อลูกค้าทันทีที่เปิดเว็บ
-    window.addEventListener('load', function() {
-      google.script.run.withSuccessHandler(function(customers) {
-        var select = document.getElementById("customerSelect");
-        select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
-        customers.forEach(function(c) {
-          var option = document.createElement("option");
-          option.value = c.id;     // ID ลูกค้า (UserID)
-          option.text = c.name;    // ชื่อลูกค้า
-          select.add(option);
-        });
-      }).getCustomerList();
-    });
-
-    // 2. ฟังก์ชันส่งบิล
-    function sendBill() {
-      var customerId = document.getElementById("customerSelect").value;
-      var customerName = document.getElementById("customerSelect").options[document.getElementById("customerSelect").selectedIndex].text;
-      
-      // ดึงยอดรวมจากหน้าเว็บ (ที่คุณคำนวณไว้แล้วใน script.js)
-      var totalText = document.getElementById("grandTotal").innerText || "0";
-      // แปลงเป็นตัวเลขเพื่อความชัวร์ หรือใช้ text เลยก็ได้
-      
-      if (!customerId) {
-        Swal.fire('แจ้งเตือน', 'กรุณาเลือกลูกค้าก่อนกดส่งครับ', 'warning');
-        return;
-      }
-
-      var dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-
-      // JSON Flex Message (ตามดีไซน์ที่คุณเลือก)
-      var flexContents = {
-        "type": "bubble",
-        "header": {
-          "type": "box", "layout": "vertical",
-          "contents": [{ "type": "image", "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png", "margin": "md", "size": "sm" }]
-        },
-        "body": {
-          "type": "box", "layout": "vertical",
-          "contents": [
-            { "type": "text", "text": "บิลแจ้งยอดชำระ", "weight": "bold", "size": "xl" },
-            {
-              "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm",
-              "contents": [
-                { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "วันที่:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": dateStr, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] },
-                { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [{ "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": customerName, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }] }
-              ]
-            },
-            { "type": "separator", "margin": "xxl" },
-            { 
-               "type": "box", "layout": "vertical", "margin": "xxl", "spacing": "sm", 
-               "contents": [
-                  {
-                     "type": "box", "layout": "baseline", 
-                     "contents": [
-                        { "type": "text", "text": "รวมรายการสินค้า", "size": "sm", "color": "#555555", "flex": 0 },
-                        { "type": "text", "text": totalText + " ฿", "size": "sm", "color": "#111111", "align": "end" }
-                     ]
-                  }
-               ] 
-            },
-            { "type": "separator", "margin": "xxl" },
-            { "type": "box", "layout": "horizontal", "margin": "md", "contents": [{ "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold" }, { "type": "text", "text": totalText + " ฿", "size": "xl", "color": "#111111", "align": "end", "weight": "bold" }] }
-          ]
-        },
-        "footer": {
-          "type": "box", "layout": "vertical", "spacing": "sm", "flex": 0,
-          "contents": [{ "type": "button", "style": "primary", "height": "sm", "action": { "type": "uri", "label": "แจ้งโอนเงิน", "uri": "https://line.me/ti/p/YOUR_LINE_ID" }, "color": "#06c755" }]
-        }
-      };
-
-      // ส่งข้อมูลไปหลังบ้าน
-      Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-      
-      google.script.run.withSuccessHandler(function(res) {
-        if (res.status === 'success') {
-          Swal.fire('สำเร็จ!', 'บอทส่งบิลให้ลูกค้าเรียบร้อยแล้วครับ', 'success');
-        } else {
-          Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + res.message, 'error');
-        }
-      }).sendFlexMessageToUser(customerId, flexContents);
-    }
-  </script>
 </body>
 </html>

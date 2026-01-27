@@ -1,6 +1,10 @@
 // ⚠️ LIFF ID (ใส่ไว้เหมือนเดิม ไม่เสียหายครับ เผื่ออนาคตใช้ดึงโปรไฟล์แอดมิน)
 const LIFF_ID = "2008984741-8hcXjikx"; 
 
+// ⚠️⚠️⚠️ สำคัญมาก! ใส่ URL ของ Web App ที่ Deploy แล้วตรงนี้ ⚠️⚠️⚠️
+// ตัวอย่าง: "https://script.google.com/macros/s/AKfycbxxx.../exec"
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby4qaEDYaAnWM2qB7Zhd8vJ2nZGbFU-m9D4vOkvyelDIpwIYJrCD18bGKwMH-4QA3UG/exec";
+
 // ---- Data (ชุดเดิมของคุณ) ----
 const DATA = {
   mice: [
@@ -163,25 +167,85 @@ function buildReceiptHTML(){
 // 🔥 ส่วนที่แก้ไข: ดึงรายชื่อลูกค้า + ให้บอทส่ง Flex Message
 // --------------------------------------------------------
 
-// 1. ฟังก์ชันโหลดรายชื่อลูกค้าจาก Google Sheet
-function loadCustomers() {
-  google.script.run.withSuccessHandler(function(customers) {
-    var select = document.getElementById("customerSelect");
-    select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
-    customers.forEach(function(c) {
-      var option = document.createElement("option");
-      option.value = c.id;
-      option.text = c.name;
-      select.add(option);
+// 1. ฟังก์ชันโหลดรายชื่อลูกค้าจาก Google Sheet (แก้ใหม่ + debug)
+async function loadCustomers() {
+  const select = document.getElementById("customerSelect");
+  
+  // เช็คว่าตั้ง URL หรือยัง
+  if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+    select.innerHTML = '<option value="" selected disabled>❌ ยังไม่ได้ตั้งค่า WEB_APP_URL</option>';
+    console.error('🔴 กรุณาแก้ WEB_APP_URL ใน script.js ก่อนครับ!');
+    return;
+  }
+  
+  try {
+    select.innerHTML = '<option value="" selected disabled>⏳ กำลังโหลดรายชื่อ...</option>';
+    
+    console.log('📡 กำลังเรียก:', WEB_APP_URL + '?action=getCustomers');
+    
+    const response = await fetch(WEB_APP_URL + '?action=getCustomers', {
+      method: 'GET',
+      redirect: 'follow'
     });
-  }).getCustomerList();
+    
+    console.log('📥 Response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const customers = await response.json();
+    console.log('📋 ข้อมูลที่ได้รับ:', customers);
+    
+    select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
+    
+    if (customers && Array.isArray(customers) && customers.length > 0) {
+      customers.forEach(function(c) {
+        const option = document.createElement("option");
+        option.value = c.id;
+        option.text = c.name || 'ไม่ระบุชื่อ';
+        select.add(option);
+      });
+      console.log('✅ โหลดลูกค้าสำเร็จ:', customers.length, 'คน');
+    } else {
+      select.innerHTML = '<option value="" selected disabled>ไม่มีรายชื่อลูกค้า</option>';
+      console.warn('⚠️ ไม่พบข้อมูลลูกค้า (array ว่างหรือไม่ใช่ array)');
+    }
+    
+  } catch (error) {
+    console.error('🔴 Error loading customers:', error);
+    select.innerHTML = '<option value="" selected disabled>❌ เกิดข้อผิดพลาด: ' + error.message + '</option>';
+    
+    // แสดง alert ช่วยเหลือ
+    Swal.fire({
+      icon: 'error',
+      title: 'ไม่สามารถโหลดรายชื่อลูกค้าได้',
+      html: `
+        <p><strong>สาเหตุที่เป็นไปได้:</strong></p>
+        <ol style="text-align: left;">
+          <li>ยังไม่ได้ Deploy Web App</li>
+          <li>WEB_APP_URL ยังไม่ถูกต้อง</li>
+          <li>ยังไม่ได้อนุญาตสิทธิ์ใน Apps Script</li>
+          <li>ไม่มี Sheet ชื่อ "Customers"</li>
+        </ol>
+        <p style="color: #dc3545; margin-top: 10px;"><strong>Error:</strong> ${error.message}</p>
+      `,
+      confirmButtonText: 'ตกลง'
+    });
+  }
 }
 
-// 2. ฟังก์ชันส่งบิล (OA เป็นคนส่ง)
-function sendFlexBill() {
+// 2. ฟังก์ชันส่งบิล (OA เป็นคนส่ง) - แก้ใหม่
+async function sendFlexBill() {
+    // เช็คว่าตั้ง URL หรือยัง
+    if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+        Swal.fire('ผิดพลาด', 'กรุณาแก้ WEB_APP_URL ใน script.js ก่อนครับ!', 'error');
+        return;
+    }
+    
     // เช็คว่าเลือกลูกค้าหรือยัง
-    var customerId = $("#customerSelect").value;
-    var customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
+    const customerId = $("#customerSelect").value;
+    const customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
 
     if (!customerId) {
         Swal.fire('แจ้งเตือน', 'กรุณาเลือกลูกค้าที่จะส่งบิลก่อนครับ', 'warning');
@@ -255,20 +319,43 @@ function sendFlexBill() {
         },
         "footer": {
             "type": "box", "layout": "vertical", "spacing": "sm",
-            "contents": [{ "type": "button", "style": "primary", "height": "sm", "color": "#06c755", "action": { "type": "uri", "label": "แจ้งโอนเงิน", "uri": "https://line.me/ti/p/@450tzdfe" } }] // ⚠️ อย่าลืมแก้ลิงก์ตรงนี้
+            "contents": [{ "type": "button", "style": "primary", "height": "sm", "color": "#06c755", "action": { "type": "uri", "label": "แจ้งโอนเงิน", "uri": "https://line.me/ti/p/@450tzdfe" } }]
         }
     };
 
-    // ส่งให้ Backend จัดการ (ส่งผ่าน OA)
+    // ส่งให้ Backend จัดการ (ส่งผ่าน OA) - แก้เป็น fetch
     Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
     
-    google.script.run.withSuccessHandler(function(res) {
-        if (res.status === 'success') {
+    try {
+        console.log('📤 กำลังส่งบิลไปที่:', WEB_APP_URL);
+        console.log('👤 ลูกค้า:', customerId, customerName);
+        
+        const response = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'sendFlex',
+                userId: customerId,
+                flexMessage: flexMessage
+            }),
+            redirect: 'follow'
+        });
+        
+        console.log('📥 Response status:', response.status);
+        const result = await response.json();
+        console.log('📋 Response data:', result);
+        
+        if (result.status === 'success') {
             Swal.fire('สำเร็จ!', 'บอทส่งบิลเรียบร้อยแล้วครับ', 'success');
         } else {
-            Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + res.message, 'error');
+            Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + result.message, 'error');
         }
-    }).sendFlexMessageToUser(customerId, flexMessage);
+    } catch (error) {
+        console.error('🔴 Error:', error);
+        Swal.fire('Error', 'ไม่สามารถส่งบิลได้: ' + error.message, 'error');
+    }
 }
 
 // Helper สร้างแถวรายการ
@@ -313,12 +400,22 @@ function wireEvents(){
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 เริ่มต้นระบบ...');
+  console.log('📍 WEB_APP_URL:', WEB_APP_URL);
+  
   buildTable();
   wireEvents();
-  loadCustomers(); // 🔥 เรียกโหลดชื่อลูกค้าทันทีที่เปิดเว็บ
+  
+  // 🔥 เรียกโหลดชื่อลูกค้าทันทีที่เปิดเว็บ
+  loadCustomers();
   
   // Init LIFF (เผื่อใช้ในอนาคต)
   try {
       await liff.init({ liffId: LIFF_ID });
-  } catch (err) { console.error(err); }
+      console.log('✅ LIFF initialized');
+  } catch (err) { 
+      console.log('⚠️ LIFF error (ไม่สำคัญถ้าไม่ใช้):', err); 
+  }
 });
+
+
