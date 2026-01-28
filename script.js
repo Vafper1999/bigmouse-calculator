@@ -7,6 +7,9 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby4qaEDYaAnWM2qB7Zh
 // (Token นี้จริงๆ ต้องใช้ที่หลังบ้าน Code.gs แต่ถ้าจะแปะไว้เป็น Reference ก็ได้ครับ)
 // const CHANNEL_ACCESS_TOKEN = '...'; 
 
+// ⚠️ ใส่เบอร์โทร หรือ เลขบัตร ปชช. ที่ผูกพร้อมเพย์ (ห้ามมีขีด)
+const PROMPTPAY_ID = "0990063438";
+
 // เก็บข้อมูลลูกค้าที่โหลดมา
 let customersData = [];
 
@@ -417,7 +420,11 @@ async function sendFlexBill() {
         });
     }
 
-    // 5. 🏗️ ประกอบร่าง JSON
+    // 🔗 สร้างลิงก์ QR Code (PromptPay) ตามยอดเงินจริง
+    // หมายเหตุ: ต้องใส่ตัวแปร PROMPTPAY_ID ไว้ด้านบนสุดของไฟล์ script.js แล้วนะครับ
+    const qrUrl = `https://promptpay.io/${PROMPTPAY_ID}/${total}`;
+
+    // 5. 🏗️ ประกอบร่าง JSON Flex Message (แบบมี QR Code)
     const flexMessage = {
         "type": "bubble",
         "header": {
@@ -480,25 +487,33 @@ async function sendFlexBill() {
         "footer": {
             "type": "box",
             "layout": "vertical",
-            "spacing": "sm",
+            "spacing": "md",
             "contents": [
-                { "type": "text", "text": "โอนได้ที่", "size": "xs", "margin": "none", "align": "center", "color": "#BFBDC7" },
-                { "type": "text", "text": "ธ.กรุงไทย", "margin": "none", "size": "lg", "weight": "bold", "align": "center" },
-                { "type": "text", "text": "983-1-84269-3", "margin": "none", "size": "lg", "weight": "bold", "align": "center", "decoration": "none" },
+                { "type": "text", "text": "สแกนเพื่อชำระเงิน (พร้อมเพย์)", "size": "xs", "align": "center", "color": "#aaaaaa" },
+                
+                // 👇 QR Code อยู่ตรงนี้
                 {
-                    "type": "button",
-                    "style": "primary",
-                    "height": "sm",
-                    "action": {
-                        "type": "message",
-                        "label": "คัดลอกเลขที่ บช.",
-                        "text": "983-1-84269-3"
-                    },
-                    "color": "#06c755",
-                    "margin": "xl"
+                    "type": "image",
+                    "url": qrUrl,
+                    "size": "lg",
+                    "aspectMode": "cover",
+                    "margin": "md"
+                },
+                
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "margin": "lg",
+                    "spacing": "xs",
+                    "contents": [
+                        { "type": "text", "text": "ธ.กรุงไทย", "size": "sm", "weight": "bold", "align": "center" },
+                        { "type": "text", "text": "983-1-84269-3", "size": "sm", "align": "center", "color": "#555555" },
+                        { "type": "text", "text": "ชื่อ: กฤตธนัท สมานเพ็ขร์", "size": "xs", "align": "center", "color": "#aaaaaa" }
+                    ]
                 }
             ],
-            "flex": 0
+            "paddingAll": "20px",
+            "backgroundColor": "#ffffff"
         }
     };
 
