@@ -325,71 +325,83 @@ function buildReceiptHTML(){
 }
 
 // ============================================================
-// 🔥 ฟังก์ชันส่งบิล Flex Message (ฉบับสมบูรณ์: สร้าง Flex + ส่ง)
+// 🚀 ฟังก์ชันส่งบิล Flex Message (แก้บั๊ก undefined)
 // ============================================================
 async function sendFlexBill() {
+    // 1. ดึงข้อมูลลูกค้า
     const customerId = $("#customerSelect").value;
-    // ดึงชื่อลูกค้าจาก Dropdown ถ้าไม่มีให้ใช้ Default
     let customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
     if (!customerName || customerName.includes("เลือกรายชื่อ")) customerName = "คุณลูกค้า";
 
     if (!customerId) {
-        Swal.fire('แจ้งเตือน', 'กรุณาเลือกลูกค้าที่จะส่งบิลก่อนครับ', 'warning');
+        Swal.fire('แจ้งเตือน', 'กรุณาเลือกหรือกรอกรายชื่อลูกค้าก่อนครับ', 'warning');
         return;
     }
 
-    // --- 1. เตรียมรายการสินค้า ---
+    // 2. รวบรวมสินค้าจาก Input (รองรับทั้งชื่อตัวแปรเก่าและใหม่)
     let items = [];
     document.querySelectorAll(".qty").forEach(e => {
-        let q = parseInt(e.value)||0;
-        if(q > 0) items.push({ 
-            name: `${animalLabel(e.dataset.a)} ${e.dataset.s} (${e.dataset.t})`, 
-            qty: q, 
-            price: q * parseFloat(e.dataset.p) 
-        });
+        let q = parseInt(e.value) || 0;
+        if (q > 0) {
+            // 🔥 แก้ตรงนี้: เช็คทั้ง dataset ใหม่ (a,s,t,p) และ dataset เก่า (animal, size, type, unit)
+            const animalKey = e.dataset.a || e.dataset.animal;
+            const sizeKey   = e.dataset.s || e.dataset.size;
+            const typeKey   = e.dataset.t || e.dataset.type;
+            const priceKey  = e.dataset.p || e.dataset.unit || 0;
+
+            items.push({
+                animal: animalLabel(animalKey),    // Mice / Rat
+                size: sizeKey,                     // Size
+                type: typeKey,                     // แช่ / เป็น
+                qty: q,
+                price: q * parseFloat(priceKey)    // ราคารวม
+            });
+        }
     });
 
     if (items.length === 0) {
-        Swal.fire('เตือน', 'กรุณาระบุจำนวนสินค้าอย่างน้อย 1 รายการ', 'warning');
+        Swal.fire('เตือน', 'กรุณาเลือกสินค้าอย่างน้อย 1 รายการ', 'warning');
         return;
     }
 
+    // 3. เตรียมตัวเลขสรุป
     const ship = parseFloat($("#shipCost").value || 0);
-    const shipMethod = $("#shipMethod").value; // ดึงวิธีขนส่ง
-    const discount = getDiscount(0); // อันนี้ต้องคำนวณจริง (ดูข้างล่าง)
-    // คำนวณยอดใหม่ให้ชัวร์
-    let subTotal = 0;
-    items.forEach(i => subTotal += i.price);
-    
-    // คำนวณส่วนลดจริง
+    const shipMethod = $("#shipMethod").value;
     const type = $('#promoType')?.value || 'none';
     const raw = parseFloat($('#promoValue')?.value || '0') || 0;
+    
+    // คำนวณ Subtotal
+    let subTotal = 0;
+    items.forEach(i => subTotal += i.price);
+
+    // คำนวณส่วนลด
     let discVal = 0;
-    if(type==='baht') discVal = Math.max(0, Math.min(raw, subTotal));
-    else if(type==='percent') discVal = Math.max(0, Math.min(100, raw))*subTotal/100;
+    if (type === 'baht') discVal = Math.max(0, Math.min(raw, subTotal));
+    else if (type === 'percent') discVal = Math.max(0, Math.min(100, raw)) * subTotal / 100;
 
     const total = subTotal - discVal + ship;
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 
-    // --- 2. สร้างชิ้นส่วนรายการสินค้า (Flex Items) ---
+    // 4. 🎨 สร้างรายการสินค้า
     let flexItems = items.map(i => ({
         "type": "box",
-        "layout": "horizontal",
+        "layout": "baseline",
         "contents": [
-            { "type": "text", "text": i.name, "size": "sm", "color": "#555555", "flex": 4, "wrap": true },
-            { "type": "text", "text": "x" + i.qty, "size": "sm", "color": "#111111", "flex": 1, "align": "end" },
-            { "type": "text", "text": fmt(i.price), "size": "sm", "color": "#111111", "flex": 2, "align": "end" }
-        ],
-        "margin": "sm"
+            { "type": "text", "text": i.animal, "size": "sm", "color": "#555555", "flex": 0 },
+            { "type": "text", "text": `${i.size} (${i.type})`, "margin": "sm", "size": "sm", "color": "#555555", "flex": 0 },
+            { "type": "text", "text": String(i.qty), "size": "sm", "margin": "md", "flex": 0, "color": "#111111" },
+            { "type": "text", "text": fmt(i.price), "size": "sm", "color": "#111111", "align": "end" }
+        ]
     }));
 
     // เพิ่มค่าส่ง
     if (ship > 0) {
         flexItems.push({
-            "type": "box", "layout": "horizontal", "margin": "sm",
+            "type": "box", "layout": "baseline",
             "contents": [
-                { "type": "text", "text": `ค่าส่ง (${shipMethod})`, "size": "sm", "color": "#555555", "flex": 5 },
-                { "type": "text", "text": fmt(ship), "size": "sm", "color": "#111111", "flex": 2, "align": "end" }
+                { "type": "text", "text": "ค่าส่ง", "size": "sm", "color": "#555555", "flex": 0 },
+                { "type": "text", "text": shipMethod, "margin": "sm", "size": "sm", "color": "#555555", "flex": 1, "wrap": true },
+                { "type": "text", "text": fmt(ship), "size": "sm", "color": "#111111", "align": "end" }
             ]
         });
     }
@@ -397,85 +409,105 @@ async function sendFlexBill() {
     // เพิ่มส่วนลด
     if (discVal > 0) {
         flexItems.push({
-            "type": "box", "layout": "horizontal", "margin": "sm",
+            "type": "box", "layout": "baseline",
             "contents": [
-                { "type": "text", "text": "ส่วนลด", "size": "sm", "color": "#ff3333", "flex": 5 },
-                { "type": "text", "text": "-" + fmt(discVal), "size": "sm", "color": "#ff3333", "flex": 2, "align": "end" }
+                { "type": "text", "text": "ส่วนลด", "size": "sm", "color": "#ff3333", "flex": 0 },
+                { "type": "text", "text": "-" + fmt(discVal), "size": "sm", "color": "#ff3333", "align": "end" }
             ]
         });
     }
 
-    // --- 3. ประกอบร่าง JSON Flex Message ---
+    // 5. 🏗️ ประกอบร่าง JSON
     const flexMessage = {
         "type": "bubble",
-        "size": "mega",
         "header": {
             "type": "box",
             "layout": "vertical",
             "contents": [
-                { "type": "text", "text": "RECEIPT / ใบเสร็จรับเงิน", "weight": "bold", "color": "#1DB446", "size": "xs" },
-                { "type": "text", "text": "Big Mouse 🐭", "weight": "bold", "size": "xxl", "margin": "md" },
-                { "type": "text", "text": "วันที่: " + dateStr, "size": "xs", "color": "#aaaaaa", "wrap": true },
-                { "type": "text", "text": "ลูกค้า: " + customerName, "size": "xs", "color": "#aaaaaa", "wrap": true }
-            ],
-            "paddingAll": "20px",
-            "backgroundColor": "#ffffff",
-            "spacing": "md",
-            "paddingTop": "22px"
+                {
+                    "type": "image",
+                    "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png",
+                    "margin": "md",
+                    "size": "sm"
+                }
+            ]
         },
         "body": {
             "type": "box",
             "layout": "vertical",
             "contents": [
-                { "type": "text", "text": "รายการสินค้า", "weight": "bold", "size": "sm", "color": "#555555" },
-                { "type": "separator", "margin": "sm" },
-                // 👇 ยัดรายการสินค้าที่เรา loop ไว้
-                { "type": "box", "layout": "vertical", "margin": "md", "contents": flexItems },
-                { "type": "separator", "margin": "lg" },
+                { "type": "text", "text": "บิลแจ้งยอดชำระ", "weight": "bold", "size": "xl" },
                 {
-                    "type": "box", "layout": "horizontal", "margin": "lg",
+                    "type": "box",
+                    "layout": "vertical",
+                    "margin": "lg",
+                    "spacing": "sm",
                     "contents": [
-                        { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold", "flex": 4 },
-                        { "type": "text", "text": fmt(total) + " ฿", "size": "lg", "color": "#ef454d", "align": "end", "weight": "bold", "flex": 3 }
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                { "type": "text", "text": "วันที่:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
+                                { "type": "text", "text": dateStr, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                { "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
+                                { "type": "text", "text": customerName, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
+                            ]
+                        }
+                    ]
+                },
+                { "type": "separator", "margin": "xxl" },
+                { "type": "box", "layout": "vertical", "margin": "xxl", "spacing": "sm", "contents": flexItems },
+                { "type": "separator", "margin": "xxl" },
+                {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "margin": "md",
+                    "contents": [
+                        { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold" },
+                        { "type": "text", "text": fmt(total) + " ฿", "size": "xl", "color": "#111111", "align": "end", "weight": "bold" }
                     ]
                 }
-            ],
-            "paddingAll": "20px",
-            "backgroundColor": "#ffffff"
+            ]
         },
         "footer": {
             "type": "box",
             "layout": "vertical",
+            "spacing": "sm",
             "contents": [
-                { "type": "text", "text": "กรุณาโอนเงินมาที่:", "size": "xs", "color": "#aaaaaa", "align": "center" },
-                // ⚠️ แก้เลขบัญชีตรงนี้
-                { "type": "text", "text": "ธ.กสิกรไทย 123-4-56789-0", "weight": "bold", "align": "center", "margin": "sm" },
-                { "type": "text", "text": "ชื่อบัญชี: ว๊าฟ หรือ Vafper", "size": "xs", "color": "#555555", "align": "center", "margin": "xs" },
+                { "type": "text", "text": "โอนได้ที่", "size": "xs", "margin": "none", "align": "center", "color": "#BFBDC7" },
+                { "type": "text", "text": "ธ.กรุงไทย", "margin": "none", "size": "lg", "weight": "bold", "align": "center" },
+                { "type": "text", "text": "983-1-84269-3", "margin": "none", "size": "lg", "weight": "bold", "align": "center", "decoration": "none" },
                 {
                     "type": "button",
-                    "action": {
-                        "type": "uri",
-                        "label": "แจ้งโอนเงิน",
-                        "uri": "https://line.me/R/ti/p/@yourid" // ⚠️ แก้ลิงก์ไลน์ของคุณตรงนี้
-                    },
                     "style": "primary",
-                    "color": "#1DB446",
-                    "margin": "lg"
+                    "height": "sm",
+                    "action": {
+                        "type": "message",
+                        "label": "คัดลอกเลขที่ บช.",
+                        "text": "983-1-84269-3"
+                    },
+                    "color": "#06c755",
+                    "margin": "xl"
                 }
             ],
-            "paddingAll": "20px",
-            "backgroundColor": "#ffffff"
+            "flex": 0
         }
     };
 
-    // --- 4. ส่งข้อมูลไปที่ Code.gs (Backend) ---
+    // 6. ส่งข้อมูล
     Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-    
+
     try {
-        // ใช้ fetch ยิงไปที่ Web App URL ของเรา (วิธีนี้แก้ CORS ได้ดีที่สุดสำหรับ Apps Script)
         const response = await fetch(WEB_APP_URL, {
             method: 'POST',
-            // ใช้ text/plain เพื่อหลีกเลี่ยง CORS Preflight ที่ยุ่งยากของ Google
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
                 action: 'sendFlex',
@@ -484,9 +516,9 @@ async function sendFlexBill() {
             }),
             redirect: 'follow'
         });
-        
+
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             Swal.fire('สำเร็จ!', 'ส่งบิลเรียบร้อยแล้วครับ 🐭', 'success');
         } else {
