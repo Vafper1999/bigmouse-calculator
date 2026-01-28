@@ -2,10 +2,15 @@
 const LIFF_ID = "2008984741-8hcXjikx"; 
 
 // ⚠️⚠️⚠️ สำคัญมาก! ใส่ URL ของ Web App ที่ Deploy แล้วตรงนี้ ⚠️⚠️⚠️
-// ตัวอย่าง: "https://script.google.com/macros/s/AKfycbxxx.../exec"
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby4qaEDYaAnWM2qB7Zhd8vJ2nZGbFU-m9D4vOkvyelDIpwIYJrCD18bGKwMH-4QA3UG/exec";
 
-// ---- Data (ชุดเดิมของคุณ) ----
+// (Token นี้จริงๆ ต้องใช้ที่หลังบ้าน Code.gs แต่ถ้าจะแปะไว้เป็น Reference ก็ได้ครับ)
+// const CHANNEL_ACCESS_TOKEN = '...'; 
+
+// เก็บข้อมูลลูกค้าที่โหลดมา
+let customersData = [];
+
+// ---- Data (ชุดข้อมูลสินค้า) ----
 const DATA = {
   mice: [
     ["3XS", 8.00, 7.00], ["2XS", 11.00, 10.00], ["XS", 13.00, 11.00],
@@ -33,6 +38,162 @@ function getDiscount(sub){
   if(type==='baht') d = Math.max(0, Math.min(raw, sub));
   else if(type==='percent') d = Math.max(0, Math.min(100, raw))*sub/100;
   return d;
+}
+
+// ============================================================
+// 🆕 ฟังก์ชันแปลง URL ของ Google Sheet เป็น CSV export URL
+// ============================================================
+function getSheetIdFromUrl(url) {
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return match ? match[1] : null;
+}
+
+// ============================================================
+// 🆕 ฟังก์ชันโหลดข้อมูลจาก Google Sheet (รองรับ Auto Load)
+// ============================================================
+async function loadCustomersFromSheet(isAutoLoad = false) {
+  const sheetUrl = $('#sheetUrlInput').value.trim();
+  const select = $('#customerSelect');
+  
+  if (!sheetUrl) {
+    if (!isAutoLoad) Swal.fire('แจ้งเตือน', 'กรุณาใส่ลิงก์ Google Sheet ก่อนครับ', 'warning');
+    return;
+  }
+  
+  const sheetId = getSheetIdFromUrl(sheetUrl);
+  
+  if (!sheetId) {
+    if (!isAutoLoad) Swal.fire('ผิดพลาด', 'ลิงก์ไม่ถูกต้อง กรุณาคัดลอกลิงก์จาก Google Sheets ใหม่', 'error');
+    return;
+  }
+  
+  try {
+    if (isAutoLoad) {
+        select.innerHTML = '<option value="" selected>🔄 กำลังโหลดข้อมูลเก่า...</option>';
+    } else {
+        select.innerHTML = '<option value="" selected>⏳ กำลังโหลดข้อมูล...</option>';
+        Swal.fire({ title: 'กำลังโหลดข้อมูล...', didOpen: () => Swal.showLoading() });
+    }
+    
+    // โหลดผ่าน CSV export ของ Google Sheet
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+    const response = await fetch(csvUrl);
+    
+    if (!response.ok) {
+      throw new Error('ไม่สามารถเข้าถึง Google Sheet ได้\nกรุณาตรวจสอบว่า Sheet เปิดแชร์เป็น "Anyone with the link can view"');
+    }
+    
+    const csvText = await response.text();
+    const rows = parseCSV(csvText);
+    
+    if (rows.length < 2) {
+      throw new Error('ไม่พบข้อมูลในชีต');
+    }
+    
+    customersData = [];
+    
+    // เริ่มอ่านจากแถวที่ 2 (index 1) เพราะแถวแรกเป็น Header
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      // ตรวจสอบว่ามี ID (col 0) และไม่ว่าง
+      if (row[0] && row[0].trim() !== '') {
+        customersData.push({
+          id: row[0].trim(),
+          name: row[1] ? row[1].trim() : 'ไม่ระบุชื่อ'
+        });
+      }
+    }
+    
+    select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
+    
+    if (customersData.length === 0) {
+      select.innerHTML = '<option value="" selected>ไม่พบข้อมูลลูกค้า</option>';
+      if (!isAutoLoad) Swal.fire('ไม่พบข้อมูล', 'ไม่พบข้อมูลลูกค้าในชีต', 'warning');
+      return;
+    }
+    
+    // เติมข้อมูลลง Dropdown
+    customersData.forEach(customer => {
+      const option = document.createElement('option');
+      option.value = customer.id;
+      option.textContent = customer.name;
+      select.appendChild(option);
+    });
+    
+    // ✅ บันทึกลิงก์ลง localStorage เพื่อใช้ครั้งหน้า
+    localStorage.setItem('sheetUrl', sheetUrl);
+    
+    if (!isAutoLoad) {
+        Swal.fire({
+          icon: 'success',
+          title: 'โหลดข้อมูลสำเร็จ!',
+          text: `พบลูกค้า ${customersData.length} คน`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+    } else {
+        console.log(`✅ Auto-load เสร็จสิ้น: พบ ${customersData.length} คน`);
+    }
+    
+  } catch (error) {
+    console.error('🔴 Error:', error);
+    select.innerHTML = '<option value="" selected>❌ เกิดข้อผิดพลาด</option>';
+    
+    if (!isAutoLoad) {
+        Swal.fire({
+          icon: 'error',
+          title: 'ไม่สามารถโหลดข้อมูลได้',
+          text: error.message,
+          confirmButtonText: 'ตกลง'
+        });
+    }
+  }
+}
+
+// ============================================================
+// 🆕 ฟังก์ชันแปลง CSV เป็น Array
+// ============================================================
+function parseCSV(text) {
+  const rows = [];
+  let currentRow = [];
+  let currentField = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentField += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      currentRow.push(currentField);
+      currentField = '';
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') i++;
+      currentRow.push(currentField);
+      if (currentRow.some(field => field.trim() !== '')) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+      currentField = '';
+    } else {
+      currentField += char;
+    }
+  }
+  
+  if (currentField || currentRow.length > 0) {
+    currentRow.push(currentField);
+    if (currentRow.some(field => field.trim() !== '')) {
+      rows.push(currentRow);
+    }
+  }
+  
+  return rows;
 }
 
 // ---- Build Table (ฟังก์ชันเดิม 100%) ----
@@ -163,178 +324,159 @@ function buildReceiptHTML(){
     return html;
 }
 
-// --------------------------------------------------------
-// 🔥 ส่วนที่แก้ไข: ดึงรายชื่อลูกค้า + ให้บอทส่ง Flex Message
-// --------------------------------------------------------
-
-// 1. ฟังก์ชันโหลดรายชื่อลูกค้าจาก Google Sheet (แก้ใหม่ + debug)
-async function loadCustomers() {
-  const select = document.getElementById("customerSelect");
-  
-  // เช็คว่าตั้ง URL หรือยัง
-  if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
-    select.innerHTML = '<option value="" selected disabled>❌ ยังไม่ได้ตั้งค่า WEB_APP_URL</option>';
-    console.error('🔴 กรุณาแก้ WEB_APP_URL ใน script.js ก่อนครับ!');
-    return;
-  }
-  
-  try {
-    select.innerHTML = '<option value="" selected disabled>⏳ กำลังโหลดรายชื่อ...</option>';
-    
-    console.log('📡 กำลังเรียก:', WEB_APP_URL + '?action=getCustomers');
-    
-    const response = await fetch(WEB_APP_URL + '?action=getCustomers', {
-      method: 'GET',
-      redirect: 'follow'
-    });
-    
-    console.log('📥 Response status:', response.status);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const customers = await response.json();
-    console.log('📋 ข้อมูลที่ได้รับ:', customers);
-    
-    select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
-    
-    if (customers && Array.isArray(customers) && customers.length > 0) {
-      customers.forEach(function(c) {
-        const option = document.createElement("option");
-        option.value = c.id;
-        option.text = c.name || 'ไม่ระบุชื่อ';
-        select.add(option);
-      });
-      console.log('✅ โหลดลูกค้าสำเร็จ:', customers.length, 'คน');
-    } else {
-      select.innerHTML = '<option value="" selected disabled>ไม่มีรายชื่อลูกค้า</option>';
-      console.warn('⚠️ ไม่พบข้อมูลลูกค้า (array ว่างหรือไม่ใช่ array)');
-    }
-    
-  } catch (error) {
-    console.error('🔴 Error loading customers:', error);
-    select.innerHTML = '<option value="" selected disabled>❌ เกิดข้อผิดพลาด: ' + error.message + '</option>';
-    
-    // แสดง alert ช่วยเหลือ
-    Swal.fire({
-      icon: 'error',
-      title: 'ไม่สามารถโหลดรายชื่อลูกค้าได้',
-      html: `
-        <p><strong>สาเหตุที่เป็นไปได้:</strong></p>
-        <ol style="text-align: left;">
-          <li>ยังไม่ได้ Deploy Web App</li>
-          <li>WEB_APP_URL ยังไม่ถูกต้อง</li>
-          <li>ยังไม่ได้อนุญาตสิทธิ์ใน Apps Script</li>
-          <li>ไม่มี Sheet ชื่อ "Customers"</li>
-        </ol>
-        <p style="color: #dc3545; margin-top: 10px;"><strong>Error:</strong> ${error.message}</p>
-      `,
-      confirmButtonText: 'ตกลง'
-    });
-  }
-}
-
-// 2. ฟังก์ชันส่งบิล (OA เป็นคนส่ง) - แก้ใหม่
+// ============================================================
+// 🔥 ฟังก์ชันส่งบิล Flex Message (ฉบับสมบูรณ์: สร้าง Flex + ส่ง)
+// ============================================================
 async function sendFlexBill() {
-    // เช็คว่าตั้ง URL หรือยัง
-    if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
-        Swal.fire('ผิดพลาด', 'กรุณาแก้ WEB_APP_URL ใน script.js ก่อนครับ!', 'error');
-        return;
-    }
-    
-    // เช็คว่าเลือกลูกค้าหรือยัง
     const customerId = $("#customerSelect").value;
-    const customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
+    // ดึงชื่อลูกค้าจาก Dropdown ถ้าไม่มีให้ใช้ Default
+    let customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
+    if (!customerName || customerName.includes("เลือกรายชื่อ")) customerName = "คุณลูกค้า";
 
     if (!customerId) {
         Swal.fire('แจ้งเตือน', 'กรุณาเลือกลูกค้าที่จะส่งบิลก่อนครับ', 'warning');
         return;
     }
 
-    // สร้างเนื้อหาบิล
-    let itemContents = [];
-    const animals = getSelectedAnimals();
-    
-    animals.forEach(a => {
-        DATA[a].forEach(([size]) => {
-            const f = document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="fresh"]`);
-            const z = document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="frozen"]`);
-            const unit = parseFloat(f?.dataset.unit || z?.dataset.unit || 0);
-            
-            const qf = parseInt(f?.value || 0, 10) || 0;
-            if (qf > 0) itemContents.push(createFlexRow(animalLabel(a), `${size} (แช่)`, qf, qf * unit));
-
-            const qz = parseInt(z?.value || 0, 10) || 0;
-            if (qz > 0) itemContents.push(createFlexRow(animalLabel(a), `${size} (เป็น)`, qz, qz * unit));
+    // --- 1. เตรียมรายการสินค้า ---
+    let items = [];
+    document.querySelectorAll(".qty").forEach(e => {
+        let q = parseInt(e.value)||0;
+        if(q > 0) items.push({ 
+            name: `${animalLabel(e.dataset.a)} ${e.dataset.s} (${e.dataset.t})`, 
+            qty: q, 
+            price: q * parseFloat(e.dataset.p) 
         });
     });
 
-    if (itemContents.length === 0) {
-        Swal.fire('แจ้งเตือน', 'กรุณาระบุจำนวนสินค้าอย่างน้อย 1 รายการ', 'warning');
+    if (items.length === 0) {
+        Swal.fire('เตือน', 'กรุณาระบุจำนวนสินค้าอย่างน้อย 1 รายการ', 'warning');
         return;
     }
 
-    // เพิ่มค่าส่ง & ส่วนลด
     const ship = parseFloat($("#shipCost").value || 0);
-    const shipMethod = $("#shipMethod").value;
-    if (ship > 0) itemContents.push(createFlexRow("ค่าส่ง", shipMethod, "", ship));
+    const shipMethod = $("#shipMethod").value; // ดึงวิธีขนส่ง
+    const discount = getDiscount(0); // อันนี้ต้องคำนวณจริง (ดูข้างล่าง)
+    // คำนวณยอดใหม่ให้ชัวร์
+    let subTotal = 0;
+    items.forEach(i => subTotal += i.price);
+    
+    // คำนวณส่วนลดจริง
+    const type = $('#promoType')?.value || 'none';
+    const raw = parseFloat($('#promoValue')?.value || '0') || 0;
+    let discVal = 0;
+    if(type==='baht') discVal = Math.max(0, Math.min(raw, subTotal));
+    else if(type==='percent') discVal = Math.max(0, Math.min(100, raw))*subTotal/100;
 
-    const discountStr = $("#promoTotal").innerText;
-    if (discountStr !== "0") {
-        itemContents.push({
-            "type": "box", "layout": "baseline",
+    const total = subTotal - discVal + ship;
+    const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // --- 2. สร้างชิ้นส่วนรายการสินค้า (Flex Items) ---
+    let flexItems = items.map(i => ({
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+            { "type": "text", "text": i.name, "size": "sm", "color": "#555555", "flex": 4, "wrap": true },
+            { "type": "text", "text": "x" + i.qty, "size": "sm", "color": "#111111", "flex": 1, "align": "end" },
+            { "type": "text", "text": fmt(i.price), "size": "sm", "color": "#111111", "flex": 2, "align": "end" }
+        ],
+        "margin": "sm"
+    }));
+
+    // เพิ่มค่าส่ง
+    if (ship > 0) {
+        flexItems.push({
+            "type": "box", "layout": "horizontal", "margin": "sm",
             "contents": [
-                { "type": "text", "text": "ส่วนลด", "size": "sm", "color": "#ff3333", "flex": 1 },
-                { "type": "text", "text": "-" + discountStr, "size": "sm", "color": "#ff3333", "align": "end", "flex": 0 }
+                { "type": "text", "text": `ค่าส่ง (${shipMethod})`, "size": "sm", "color": "#555555", "flex": 5 },
+                { "type": "text", "text": fmt(ship), "size": "sm", "color": "#111111", "flex": 2, "align": "end" }
             ]
         });
     }
 
-    const grandTotal = $("#grandTotal").innerText;
+    // เพิ่มส่วนลด
+    if (discVal > 0) {
+        flexItems.push({
+            "type": "box", "layout": "horizontal", "margin": "sm",
+            "contents": [
+                { "type": "text", "text": "ส่วนลด", "size": "sm", "color": "#ff3333", "flex": 5 },
+                { "type": "text", "text": "-" + fmt(discVal), "size": "sm", "color": "#ff3333", "flex": 2, "align": "end" }
+            ]
+        });
+    }
 
-    // สร้าง JSON Message
+    // --- 3. ประกอบร่าง JSON Flex Message ---
     const flexMessage = {
         "type": "bubble",
+        "size": "mega",
         "header": {
-            "type": "box", "layout": "vertical",
-            "contents": [{ "type": "image", "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png", "margin": "md", "size": "sm" }]
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                { "type": "text", "text": "RECEIPT / ใบเสร็จรับเงิน", "weight": "bold", "color": "#1DB446", "size": "xs" },
+                { "type": "text", "text": "Big Mouse 🐭", "weight": "bold", "size": "xxl", "margin": "md" },
+                { "type": "text", "text": "วันที่: " + dateStr, "size": "xs", "color": "#aaaaaa", "wrap": true },
+                { "type": "text", "text": "ลูกค้า: " + customerName, "size": "xs", "color": "#aaaaaa", "wrap": true }
+            ],
+            "paddingAll": "20px",
+            "backgroundColor": "#ffffff",
+            "spacing": "md",
+            "paddingTop": "22px"
         },
         "body": {
-            "type": "box", "layout": "vertical",
+            "type": "box",
+            "layout": "vertical",
             "contents": [
-                { "type": "text", "text": "บิลแจ้งยอดชำระ", "weight": "bold", "size": "xl" },
-                { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
-                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "วันที่:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": new Date().toLocaleDateString('th-TH'), "color": "#666666", "size": "sm", "flex": 5 } ] },
-                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": customerName, "color": "#666666", "size": "sm", "flex": 5 } ] }
-                ]},
-                { "type": "separator", "margin": "xxl" },
-                { "type": "box", "layout": "vertical", "margin": "xxl", "spacing": "sm", "contents": itemContents },
-                { "type": "separator", "margin": "xxl" },
-                { "type": "box", "layout": "horizontal", "margin": "md", "contents": [
-                    { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold" },
-                    { "type": "text", "text": grandTotal + " ฿", "size": "xl", "color": "#111111", "align": "end", "weight": "bold" }
-                ]}
-            ]
+                { "type": "text", "text": "รายการสินค้า", "weight": "bold", "size": "sm", "color": "#555555" },
+                { "type": "separator", "margin": "sm" },
+                // 👇 ยัดรายการสินค้าที่เรา loop ไว้
+                { "type": "box", "layout": "vertical", "margin": "md", "contents": flexItems },
+                { "type": "separator", "margin": "lg" },
+                {
+                    "type": "box", "layout": "horizontal", "margin": "lg",
+                    "contents": [
+                        { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold", "flex": 4 },
+                        { "type": "text", "text": fmt(total) + " ฿", "size": "lg", "color": "#ef454d", "align": "end", "weight": "bold", "flex": 3 }
+                    ]
+                }
+            ],
+            "paddingAll": "20px",
+            "backgroundColor": "#ffffff"
         },
         "footer": {
-            "type": "box", "layout": "vertical", "spacing": "sm",
-            "contents": [{ "type": "button", "style": "primary", "height": "sm", "color": "#06c755", "action": { "type": "uri", "label": "แจ้งโอนเงิน", "uri": "https://line.me/ti/p/@450tzdfe" } }]
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                { "type": "text", "text": "กรุณาโอนเงินมาที่:", "size": "xs", "color": "#aaaaaa", "align": "center" },
+                // ⚠️ แก้เลขบัญชีตรงนี้
+                { "type": "text", "text": "ธ.กสิกรไทย 123-4-56789-0", "weight": "bold", "align": "center", "margin": "sm" },
+                { "type": "text", "text": "ชื่อบัญชี: ว๊าฟ หรือ Vafper", "size": "xs", "color": "#555555", "align": "center", "margin": "xs" },
+                {
+                    "type": "button",
+                    "action": {
+                        "type": "uri",
+                        "label": "แจ้งโอนเงิน",
+                        "uri": "https://line.me/R/ti/p/@yourid" // ⚠️ แก้ลิงก์ไลน์ของคุณตรงนี้
+                    },
+                    "style": "primary",
+                    "color": "#1DB446",
+                    "margin": "lg"
+                }
+            ],
+            "paddingAll": "20px",
+            "backgroundColor": "#ffffff"
         }
     };
 
-    // ส่งให้ Backend จัดการ (ส่งผ่าน OA) - แก้เป็น fetch
+    // --- 4. ส่งข้อมูลไปที่ Code.gs (Backend) ---
     Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
     
     try {
-        console.log('📤 กำลังส่งบิลไปที่:', WEB_APP_URL);
-        console.log('👤 ลูกค้า:', customerId, customerName);
-        
+        // ใช้ fetch ยิงไปที่ Web App URL ของเรา (วิธีนี้แก้ CORS ได้ดีที่สุดสำหรับ Apps Script)
         const response = await fetch(WEB_APP_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            // ใช้ text/plain เพื่อหลีกเลี่ยง CORS Preflight ที่ยุ่งยากของ Google
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
                 action: 'sendFlex',
                 userId: customerId,
@@ -343,12 +485,10 @@ async function sendFlexBill() {
             redirect: 'follow'
         });
         
-        console.log('📥 Response status:', response.status);
         const result = await response.json();
-        console.log('📋 Response data:', result);
         
         if (result.status === 'success') {
-            Swal.fire('สำเร็จ!', 'บอทส่งบิลเรียบร้อยแล้วครับ', 'success');
+            Swal.fire('สำเร็จ!', 'ส่งบิลเรียบร้อยแล้วครับ 🐭', 'success');
         } else {
             Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + result.message, 'error');
         }
@@ -356,19 +496,6 @@ async function sendFlexBill() {
         console.error('🔴 Error:', error);
         Swal.fire('Error', 'ไม่สามารถส่งบิลได้: ' + error.message, 'error');
     }
-}
-
-// Helper สร้างแถวรายการ
-function createFlexRow(col1, col2, col3, total) {
-    return {
-        "type": "box", "layout": "baseline",
-        "contents": [
-            { "type": "text", "text": col1, "size": "sm", "color": "#555555", "flex": 0 },
-            { "type": "text", "text": col2, "size": "sm", "color": "#555555", "margin": "sm", "flex": 1, "wrap": true },
-            { "type": "text", "text": col3 ? String(col3) : "", "size": "sm", "margin": "md", "flex": 0, "align": "center" },
-            { "type": "text", "text": fmt(total), "size": "sm", "color": "#111111", "align": "end", "flex": 0 }
-        ]
-    };
 }
 
 // ---- Events ----
@@ -386,14 +513,22 @@ function wireEvents(){
     Swal.fire({ icon: 'success', title: 'คัดลอกข้อความแล้ว', timer: 1500, showConfirmButton: false });
   });
   
-  // ปุ่มดูบิล
   $("#showReceiptBtn").addEventListener('click',openReceipt);
   $("#billClose").addEventListener('click',closeReceipt);
   $("#billDone").addEventListener('click',closeReceipt);
   $("#billCopy").addEventListener('click',copyReceipt);
   document.querySelector('#billModal .modal-backdrop').addEventListener('click',closeReceipt);
 
-  // ปุ่มส่งไลน์ (เชื่อมกับฟังก์ชันใหม่)
+  // 🆕 ปุ่มโหลดข้อมูล (Manual)
+  $("#loadSheetBtn").addEventListener('click', () => loadCustomersFromSheet(false));
+  
+  // 🆕 กด Enter ใน input ก็โหลดได้เลย
+  $("#sheetUrlInput").addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      loadCustomersFromSheet(false);
+    }
+  });
+  
   const lineBtn = document.getElementById('sendLineFlexBtn');
   if(lineBtn) lineBtn.addEventListener('click', sendFlexBill);
 }
@@ -401,21 +536,24 @@ function wireEvents(){
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 เริ่มต้นระบบ...');
-  console.log('📍 WEB_APP_URL:', WEB_APP_URL);
   
   buildTable();
   wireEvents();
   
-  // 🔥 เรียกโหลดชื่อลูกค้าทันทีที่เปิดเว็บ
-  loadCustomers();
+  // 🔥 ตรวจสอบ localStorage และโหลดข้อมูลทันทีถ้ามีลิงก์เดิม
+  const savedUrl = localStorage.getItem('sheetUrl');
+  if (savedUrl) {
+    $('#sheetUrlInput').value = savedUrl;
+    console.log('📌 พบลิงก์เดิม:', savedUrl);
+    // สั่งโหลดออโต้ทันที (ส่ง true ไปเพื่อให้ฟังก์ชันรู้ว่าเป็น Auto Load)
+    loadCustomersFromSheet(true); 
+  }
   
-  // Init LIFF (เผื่อใช้ในอนาคต)
+  // Init LIFF
   try {
       await liff.init({ liffId: LIFF_ID });
       console.log('✅ LIFF initialized');
   } catch (err) { 
-      console.log('⚠️ LIFF error (ไม่สำคัญถ้าไม่ใช้):', err); 
+      console.log('⚠️ LIFF error:', err); 
   }
 });
-
-

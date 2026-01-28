@@ -59,7 +59,7 @@
             <div style="flex:1 1 220px">
               <label>ค่าส่ง (บาท)</label>
               <input id="shipCost" type="number" step="1" min="0" value="0">
-              <div class="hint">เลือก “รับเอง” ระบบจะตั้งเป็น 0 อัตโนมัติ</div>
+              <div class="hint">เลือก "รับเอง" ระบบจะตั้งเป็น 0 อัตโนมัติ</div>
             </div>
             <div style="flex:1 1 200px">
               <label for="promoType">โปรโมชั่น / ส่วนลด</label>
@@ -102,10 +102,30 @@
           </table>
 
           <div style="margin-top:14px">
+            <!-- 🆕 เพิ่มส่วนโหลดข้อมูลจาก Google Sheet -->
+            <div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+              <label style="font-size: 0.9rem; font-weight: 600; color: #333; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                🔗 ลิงก์ Google Sheet (Customers)
+              </label>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input 
+                  id="sheetUrlInput" 
+                  type="text" 
+                  placeholder="วางลิงก์ Google Sheet ที่นี่..." 
+                  style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+                >
+                <button id="loadSheetBtn" class="btn" style="padding: 8px 16px; white-space: nowrap;">โหลดข้อมูล</button>
+              </div>
+              <div class="hint" style="font-size: 11px; color: #666; line-height: 1.4;">
+                💡 วิธีใช้: คลิกขวาที่ Google Sheet → แชร์ → คัดลอกลิงก์ → วางที่นี่ → กดโหลดข้อมูล<br>
+                📌 ต้องตั้งค่า Sheet ให้ "ทุกคนที่มีลิงก์สามารถดูได้" (Anyone with the link can view)
+              </div>
+            </div>
+
             <div style="margin-bottom: 10px;">
               <label style="font-size: 0.9rem; color: #666;">ส่งบิลให้ลูกค้า:</label>
               <select id="customerSelect" class="form-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="" selected>⏳ กำลังโหลดรายชื่อ...</option>
+                <option value="" selected>📋 กรุณาโหลดข้อมูลลูกค้าก่อน (กดปุ่มข้างบน)</option>
               </select>
             </div>
 
