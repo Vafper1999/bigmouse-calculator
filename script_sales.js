@@ -1,5 +1,5 @@
 // ⚠️ URL ล่าสุดของคุณ
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxyUdAIqpSAN1_kkjsCX73bo7muRxX412P-c9R3jdTTqREyM5FuI9M_DfEXxBlGyY_a/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSHN31j1DUvkRbRaP-kCVRIKKFOGrvrZiPz8AX_sEliKJDM65G8ri49SWed91wmiCyow/exec';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,6 +23,9 @@ let cart = [];
 function init() {
   $('sale-date').value = new Date().toISOString().split('T')[0];
   updateSizeList();
+  
+  // โหลดประวัติการขายทันทีที่เปิดหน้าเว็บ
+  loadSalesHistory();
 }
 
 // --- ส่วนจัดการ Settings (ปุ่มเฟือง) ---
@@ -220,6 +223,9 @@ async function submitSaleOrder() {
       cart = [];
       renderCart();
       $('sale-no').value = '';
+      
+      // อัปเดตตารางประวัติการขายทันทีหลังบันทึกเสร็จ
+      loadSalesHistory(); 
     } else {
       throw new Error(result.message);
     }
@@ -229,6 +235,112 @@ async function submitSaleOrder() {
   } finally {
     btn.disabled = false;
     btn.textContent = oldTxt;
+  }
+}
+
+// ==========================================
+// 📊 ส่วนประวัติการขาย (Sales History)
+// ==========================================
+
+async function loadSalesHistory() {
+  const monthSelect = $('history-month-filter');
+  const selectedMonth = monthSelect ? monthSelect.value : "";
+  const tbody = $('history-body');
+  
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ... ⏳</td></tr>';
+  }
+
+  try {
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'getSalesHistory',
+        month: selectedMonth === 'current' ? '' : selectedMonth
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.status === 'success') {
+      const data = result.data;
+      
+      // อัปเดต Dropdown เดือน (ทำเฉพาะตอนโหลดครั้งแรก หรือตอนเริ่มใช้)
+      if (monthSelect && (monthSelect.options.length <= 1 || selectedMonth === 'current' || selectedMonth === '')) {
+        monthSelect.innerHTML = "";
+        data.months.forEach(m => {
+          const option = document.createElement("option");
+          option.value = m.value;
+          option.text = m.label;
+          if (m.value === data.selectedMonth) option.selected = true;
+          monthSelect.appendChild(option);
+        });
+      }
+
+      // วาดตารางข้อมูล
+      renderHistoryTable(data.records);
+    }
+  } catch (error) {
+    console.error("Error fetching sales history:", error);
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+    }
+  }
+}
+
+function renderHistoryTable(records) {
+  const tbody = $('history-body');
+  const summary = $('history-summary');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  let sumPrice = 0;
+  let sumShipProfit = 0;
+
+  if (!records || records.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูลการขายในเดือนนี้</td></tr>';
+    if (summary) summary.style.display = 'none';
+    return;
+  }
+
+  records.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = "1px solid #eee";
+    
+    // คำนวณกำไรค่าส่ง
+    const shipCharge = parseFloat(item.shipCharge) || 0;
+    const shipActual = parseFloat(item.shipActual) || 0;
+    const shipProfit = shipCharge - shipActual;
+    
+    const price = parseFloat(item.price) || 0;
+    sumPrice += price;
+    sumShipProfit += shipProfit;
+
+    // รูปแบบ แช่/เป็น
+    const typeLabel = (item.type === 'เป็น' || item.type === 'Live') 
+      ? '<span style="color:green; font-weight:bold;">[เป็น]</span>' 
+      : '<span style="color:blue; font-weight:bold;">[แช่]</span>';
+
+    tr.innerHTML = `
+      <td style="padding:10px 8px;">${item.date}</td>
+      <td style="padding:10px 8px;">${item.animal} ${item.size}</td>
+      <td style="padding:10px 8px;">${typeLabel}</td>
+      <td style="padding:10px 8px;">${item.qty}</td>
+      <td style="padding:10px 8px; font-weight:bold;">${price.toLocaleString()}</td>
+      <td style="padding:10px 8px; color:gray;">${shipCharge.toLocaleString()}</td>
+      <td style="padding:10px 8px; color:gray;">${shipActual.toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // อัปเดตยอดรวมด้านล่าง
+  if (summary) {
+    summary.style.display = 'block';
+    const elPrice = $('sum-monthly-price');
+    const elShip = $('sum-monthly-ship');
+    if (elPrice) elPrice.textContent = sumPrice.toLocaleString();
+    if (elShip) elShip.textContent = sumShipProfit.toLocaleString();
   }
 }
 

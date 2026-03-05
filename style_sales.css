@@ -171,3 +171,68 @@ input[type="checkbox"] + label {
   align-items: center;
   flex-wrap: wrap;
 }
+
+/* =========================================
+   4. ประวัติการขาย (Sales History)
+   ========================================= */
+
+/* --- Dropdown เลือกเดือน --- */
+#history-month-filter {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+#history-month-filter:focus {
+  border-color: var(--accent);
+}
+
+/* --- ตารางประวัติการขาย --- */
+#sales-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 600px;
+}
+#sales-history-table thead {
+  background-color: var(--soft) !important;
+}
+#sales-history-table th {
+  padding: 12px 10px !important;
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid var(--border) !important;
+  white-space: nowrap;
+}
+#sales-history-table td {
+  padding: 12px 10px !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text);
+  white-space: nowrap;
+}
+#sales-history-table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* --- สรุปยอดขายด้านล่าง --- */
+#history-summary {
+  margin-top: 15px;
+  padding: 12px 15px !important;
+  background: var(--soft) !important;
+  border-radius: 10px !important;
+  font-size: 14px;
+  font-weight: bold;
+  border: 1px dashed var(--border) !important;
+  color: var(--text);
+}
+#sum-monthly-price {
+  font-size: 18px;
+  color: var(--accent) !important;
+}

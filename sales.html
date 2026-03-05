@@ -149,6 +149,41 @@
       ✅ บันทึกยอดขาย
     </button>
     
+    <section class="card" style="margin-top: 20px; padding-bottom: 20px;">
+      <div class="head" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>4. ประวัติการขาย</h2>
+        <select id="history-month-filter" onchange="loadSalesHistory()" style="width: auto; padding: 5px 10px; border-radius: 8px; border: 1px solid #ccc;">
+          <option value="current">เดือนปัจจุบัน</option>
+        </select>
+      </div>
+
+      <div style="overflow-x: auto; margin-top: 15px;">
+        <table id="sales-history-table" style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px;">
+          <thead>
+            <tr style="background: #f2f2f2; text-align: left; border-bottom: 2px solid #ddd;">
+              <th style="padding: 12px 8px;">วันที่</th>
+              <th style="padding: 12px 8px;">สินค้า/ไซส์</th>
+              <th style="padding: 12px 8px;">รูปแบบ</th>
+              <th style="padding: 12px 8px;">จำนวน</th>
+              <th style="padding: 12px 8px;">ราคาขาย</th>
+              <th style="padding: 12px 8px;">ค่าส่ง(ลค.)</th>
+              <th style="padding: 12px 8px;">ค่าส่ง(จริง)</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div id="history-summary" style="margin-top: 15px; padding: 10px; background: #fffde7; border-radius: 8px; font-size: 14px; font-weight: bold; border: 1px solid #ffe57f; display: none;">
+        ยอดขายรวมเดือนนี้: <span id="sum-monthly-price" style="color:var(--accent);">0</span> บาท | 
+        กำไรค่าส่ง: <span id="sum-monthly-ship" style="color:var(--text);">0</span> บาท
+      </div>
+    </section>
+    
     <div style="height:50px;"></div>
   </div>
 
