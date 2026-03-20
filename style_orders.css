@@ -45,6 +45,38 @@
   line-height: 1.2;
 }
 
+/* --- 🌟 กล่อง BALANCE แยกกระเป๋าเงิน --- */
+.stat-card.balance {
+  display: flex;
+  flex-direction: column;
+}
+
+.balance-breakdown {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto; 
+  padding-top: 10px;
+  border-top: 1px dashed #cbd5e1; /* เส้นประสีเทาอ่อน */
+  font-size: 13px;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.breakdown-lbl {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.breakdown-val {
+  color: #334155;
+  font-weight: 700;
+}
+
 /* สีตัวเลขแยกประเภท */
 .sales .val { color: #10b981; }   /* เขียว */
 .expense .val { color: #ef4444; } /* แดง */
@@ -73,24 +105,13 @@
 
 /* กำหนดความกว้างแต่ละช่อง */
 #order-table th:nth-child(1), 
-#order-table td:nth-child(1) {
-  width: 18%; /* วันที่ */
-  text-align: center;
-  white-space: nowrap;
-}
+#order-table td:nth-child(1) { width: 18%; text-align: center; white-space: nowrap; }
 
 #order-table th:nth-child(2), 
-#order-table td:nth-child(2) {
-  width: auto; /* รายการ (ยืดหยุ่น) */
-  text-align: left;
-}
+#order-table td:nth-child(2) { width: auto; text-align: left; }
 
 #order-table th:nth-child(3), 
-#order-table td:nth-child(3) {
-  width: 25%; /* ยอดเงิน */
-  text-align: right;
-  font-weight: 600;
-}
+#order-table td:nth-child(3) { width: 25%; text-align: right; font-weight: 600; }
 
 /* --- Modal (หน้าต่างตั้งค่า) --- */
 .modal {
@@ -111,7 +132,6 @@
    ★★★ Mobile Optimization (ส่วนปรับแต่งมือถือ) ★★★
    =========================================================== */
 @media (max-width: 600px) {
-  /* 1. Dashboard: เปลี่ยนเป็นเรียง 1 แถว (รายการแนวนอน) */
   .dashboard-grid {
     grid-template-columns: 1fr; /* 1 คอลัมน์ */
     gap: 10px;
@@ -132,19 +152,48 @@
   }
   
   .stat-card .val {
-    font-size: 22px; /* ตัวเลขใหญ่ขึ้น */
+    font-size: 22px; 
   }
 
-  /* 2. Table: ปรับขนาดตัวอักษรให้พอดีจอเล็ก */
+  /* 🌟 จัดระเบียบกล่อง Balance บนมือถือด้วย Grid */
+  .stat-card.balance {
+    display: grid;
+    grid-template-areas: 
+      "lbl val"
+      "breakdown breakdown";
+    align-items: center;
+  }
+  .stat-card.balance .lbl { grid-area: lbl; }
+  .stat-card.balance .val { grid-area: val; text-align: right; }
+  
+  .balance-breakdown { 
+    grid-area: breakdown; 
+    margin-top: 12px; 
+    padding-top: 12px;
+  }
+
+  /* Table: ปรับขนาดตัวอักษรให้พอดีจอเล็ก */
   #order-table th, 
   #order-table td {
-    font-size: 12px; /* ลดขนาดลงนิดนึง */
+    font-size: 12px; 
     padding: 8px 4px;
   }
   
-  /* 3. Modal: ให้เต็มจอมากขึ้น */
+  /* Modal: ให้เต็มจอมากขึ้น */
   .modal-content {
     width: 95%;
     padding: 20px;
   }
+}
+/* --- ปุ่มโยกเงิน --- */
+.btn-transfer {
+  background-color: #64748b; /* สีเทาอมฟ้า */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.btn-transfer:hover {
+  background-color: #475569;
 }

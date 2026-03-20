@@ -1,5 +1,5 @@
-// ⚠️ URL ล่าสุดของคุณ
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSHN31j1DUvkRbRaP-kCVRIKKFOGrvrZiPz8AX_sEliKJDM65G8ri49SWed91wmiCyow/exec';
+// ⚠️ URL ล่าสุดของคุณ (ตรวจสอบให้ตรงกับตัวที่ Deploy ใหม่ล่าสุด)
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwcfYozMfzchT98X2rOZnT_9otOFrkGMxosTixCBUMJvIsAhN62CUaZoH8gM_L3Ol_mA/exec';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,8 +23,6 @@ let cart = [];
 function init() {
   $('sale-date').value = new Date().toISOString().split('T')[0];
   updateSizeList();
-  
-  // โหลดประวัติการขายทันทีที่เปิดหน้าเว็บ
   loadSalesHistory();
 }
 
@@ -38,13 +36,11 @@ function closeSettings() {
 }
 
 async function saveSettings() {
-  const url = $('sheet-url-input').value;
-  if (!url) return alert('กรุณาวางลิงก์ Google Sheet');
+  const salesUrl = $('sheet-url-input').value; // ลิงก์ไฟล์ขาย
+  const walletUrl = $('wallet-url-input') ? $('wallet-url-input').value : ""; // 🌟 ลิงก์ไฟล์รายจ่าย (กระเป๋าเงิน)
   
-  if (!url.includes('docs.google.com/spreadsheets')) {
-    return alert('ลิงก์ไม่ถูกต้อง ต้องเป็นลิงก์ Google Sheet เท่านั้น');
-  }
-
+  if (!salesUrl) return alert('กรุณาวางลิงก์ Google Sheet สำหรับบันทึกยอดขาย');
+  
   const btn = event.target;
   const oldTxt = btn.innerText;
   btn.innerText = 'กำลังบันทึก...';
@@ -53,13 +49,15 @@ async function saveSettings() {
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
-      redirect: 'follow',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: 'setSheetUrl', url: url })
+      body: JSON.stringify({ 
+        action: 'setSheetUrl', 
+        url: salesUrl,
+        walletUrl: walletUrl // 🌟 ส่งลิงก์กระเป๋าเงินไปเก็บด้วย
+      })
     });
     
     const result = await res.json();
-    
     if (result.status === 'success') {
       alert('✅ ' + result.message);
       closeSettings();
@@ -73,6 +71,7 @@ async function saveSettings() {
     btn.disabled = false;
   }
 }
+
 // ------------------------------------
 
 function updateSizeList() {
@@ -107,9 +106,7 @@ function addToCart() {
   const isLive = $('prod-live').checked; 
   const isWholesale = $('type-wholesale').checked;
   
-  if (isWholesale) {
-    size = size + ' w';
-  }
+  if (isWholesale) { size = size + ' w'; }
 
   let promVal = parseFloat($('prom-val').value) || 0;
   const promType = $('prom-type').value;
@@ -139,7 +136,6 @@ function addToCart() {
   $('prod-qty').value = '';
   $('prom-val').value = '';
   $('prod-live').checked = false; 
-
   renderCart();
 }
 
@@ -160,9 +156,7 @@ function renderCart() {
   cart.forEach((item, index) => {
     const sum = (item.price * item.qty) - item.discount;
     totalNet += sum;
-    
     const condition = item.isLive ? '<span style="color:green">[เป็น]</span>' : '<span style="color:blue">[แช่]</span>';
-
     const div = document.createElement('div');
     div.className = 'cart-item';
     div.innerHTML = `
@@ -176,7 +170,6 @@ function renderCart() {
     `;
     container.appendChild(div);
   });
-
   $('grand-total').textContent = totalNet.toLocaleString();
 }
 
@@ -187,7 +180,6 @@ function remItem(index) {
 
 async function submitSaleOrder() {
   if (cart.length === 0) return alert('ตะกร้าว่างเปล่า');
-  
   const date = $('sale-date').value;
   const no   = $('sale-no').value;
   if (!date) return alert('กรุณาเลือกวันที่');
@@ -205,31 +197,26 @@ async function submitSaleOrder() {
       items: cart,
       paymentType: $('pay-type').value,
       shipMethod: $('ship-method').value,
-      shipCost: $('ship-cost').value,
-      shipPaid: $('ship-paid').value
+      shipCost: parseFloat($('ship-cost').value) || 0,
+      shipPaid: parseFloat($('ship-paid').value) || 0
     };
 
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
-      redirect: 'follow',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
 
     const result = await res.json();
-
     if (result.status === 'success') {
       alert('✅ บันทึกสำเร็จ!');
       cart = [];
       renderCart();
       $('sale-no').value = '';
-      
-      // อัปเดตตารางประวัติการขายทันทีหลังบันทึกเสร็จ
       loadSalesHistory(); 
     } else {
       throw new Error(result.message);
     }
-
   } catch (err) {
     alert('❌ Error: ' + err.message);
   } finally {
@@ -246,46 +233,31 @@ async function loadSalesHistory() {
   const monthSelect = $('history-month-filter');
   const selectedMonth = monthSelect ? monthSelect.value : "";
   const tbody = $('history-body');
-  
-  if (tbody) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ... ⏳</td></tr>';
-  }
+  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ... ⏳</td></tr>';
 
   try {
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'getSalesHistory',
-        month: selectedMonth === 'current' ? '' : selectedMonth
-      })
+      body: JSON.stringify({ action: 'getSalesHistory', month: selectedMonth === 'current' ? '' : selectedMonth })
     });
-
     const result = await response.json();
-    
     if (result.status === 'success') {
       const data = result.data;
-      
-      // อัปเดต Dropdown เดือน (ทำเฉพาะตอนโหลดครั้งแรก หรือตอนเริ่มใช้)
       if (monthSelect && (monthSelect.options.length <= 1 || selectedMonth === 'current' || selectedMonth === '')) {
         monthSelect.innerHTML = "";
         data.months.forEach(m => {
           const option = document.createElement("option");
-          option.value = m.value;
-          option.text = m.label;
+          option.value = m.value; option.text = m.label;
           if (m.value === data.selectedMonth) option.selected = true;
           monthSelect.appendChild(option);
         });
       }
-
-      // วาดตารางข้อมูล
       renderHistoryTable(data.records);
     }
   } catch (error) {
-    console.error("Error fetching sales history:", error);
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
-    }
+    console.error(error);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาด</td></tr>';
   }
 }
 
@@ -293,13 +265,11 @@ function renderHistoryTable(records) {
   const tbody = $('history-body');
   const summary = $('history-summary');
   if (!tbody) return;
-
   tbody.innerHTML = '';
-  let sumPrice = 0;
-  let sumShipProfit = 0;
+  let sumPrice = 0; let sumShipProfit = 0;
 
   if (!records || records.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูลการขายในเดือนนี้</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูล</td></tr>';
     if (summary) summary.style.display = 'none';
     return;
   }
@@ -307,17 +277,12 @@ function renderHistoryTable(records) {
   records.forEach(item => {
     const tr = document.createElement('tr');
     tr.style.borderBottom = "1px solid #eee";
-    
-    // คำนวณกำไรค่าส่ง
     const shipCharge = parseFloat(item.shipCharge) || 0;
     const shipActual = parseFloat(item.shipActual) || 0;
     const shipProfit = shipCharge - shipActual;
-    
     const price = parseFloat(item.price) || 0;
-    sumPrice += price;
-    sumShipProfit += shipProfit;
+    sumPrice += price; sumShipProfit += shipProfit;
 
-    // รูปแบบ แช่/เป็น
     const typeLabel = (item.type === 'เป็น' || item.type === 'Live') 
       ? '<span style="color:green; font-weight:bold;">[เป็น]</span>' 
       : '<span style="color:blue; font-weight:bold;">[แช่]</span>';
@@ -334,13 +299,10 @@ function renderHistoryTable(records) {
     tbody.appendChild(tr);
   });
 
-  // อัปเดตยอดรวมด้านล่าง
   if (summary) {
     summary.style.display = 'block';
-    const elPrice = $('sum-monthly-price');
-    const elShip = $('sum-monthly-ship');
-    if (elPrice) elPrice.textContent = sumPrice.toLocaleString();
-    if (elShip) elShip.textContent = sumShipProfit.toLocaleString();
+    if ($('sum-monthly-price')) $('sum-monthly-price').textContent = sumPrice.toLocaleString();
+    if ($('sum-monthly-ship')) $('sum-monthly-ship').textContent = sumShipProfit.toLocaleString();
   }
 }
 

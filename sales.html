@@ -190,21 +190,28 @@
   <div id="settings-modal" class="modal">
     <div class="modal-content">
       <h3 style="margin-top:0;">⚙️ ตั้งค่าไฟล์ข้อมูล</h3>
-      <p style="font-size:14px; color:#666;">
+      <p style="font-size:14px; color:#666; margin-bottom: 20px;">
         เมื่อขึ้นปีใหม่ หรือเปลี่ยนไฟล์ Google Sheet ให้เอาลิงก์ไฟล์ใหม่มาวางที่นี่ครับ
       </p>
       
       <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">
-        Google Sheet URL:
+        1. ลิงก์ Google Sheet สำหรับบันทึกยอดขาย (Sales):
       </label>
-      <input type="text" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:15px;">
+      <input type="text" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/..." 
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:15px; box-sizing: border-box;">
+      
+      <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">
+        2. ลิงก์ Google Sheet สำหรับอัปเดตกระเป๋าเงิน (Purchases):
+      </label>
+      <input type="text" id="wallet-url-input" placeholder="วางลิงก์ไฟล์เดียวกับหน้า Purchases" 
+             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:20px; box-sizing: border-box;">
       
       <div style="display:flex; gap:10px;">
         <button class="btn" onclick="saveSettings()" style="flex:1;">บันทึก</button>
         <button class="btn" onclick="closeSettings()" style="flex:1; background:#ccc; color:#333;">ปิด</button>
       </div>
     </div>
-  </div>
+</div>
 
   <script src="script_sales.js"></script>
 </body>

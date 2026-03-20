@@ -24,33 +24,75 @@
     <div class="title">📝 บันทึกรายจ่าย</div>
 
     <div class="dashboard-grid">
-      <div class="stat-card sales"><div class="lbl">Sales</div><div class="val" id="dash-sales">0</div></div>
-      <div class="stat-card expense"><div class="lbl">Expenses</div><div class="val" id="dash-expenses">0</div></div>
-      <div class="stat-card profit"><div class="lbl">Profit</div><div class="val" id="dash-profit">0</div></div>
-      <div class="stat-card balance"><div class="lbl">Balance</div><div class="val" id="dash-balance">0</div></div>
+  <div class="stat-card sales">
+    <div class="lbl">SALES</div>
+    <div class="val" id="dash-sales">0.00</div>
+  </div>
+  
+  <div class="stat-card expense">
+    <div class="lbl">EXPENSES</div>
+    <div class="val" id="dash-expenses">0.00</div>
+  </div>
+  
+  <div class="stat-card profit">
+    <div class="lbl">PROFIT</div>
+    <div class="val" id="dash-profit">0.00</div>
+  </div>
+  
+  <div class="stat-card balance">
+    <div class="lbl">BALANCE</div>
+    <div class="val" id="dash-balance">0.00</div>
+    
+    <div class="balance-breakdown">
+      <div class="breakdown-item">
+        <span class="breakdown-lbl">💵 เงินสด</span>
+        <span class="breakdown-val" id="dash-cash">0.00</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-lbl">📱 บัญชี</span>
+        <span class="breakdown-val" id="dash-digital">0.00</span>
+      </div>
+    </div>
+    
+  </div>
+</div>
+  
+    <div style="text-align: right; margin-bottom: 15px;">
+      <button class="btn btn-transfer" onclick="openTransferModal()">🔄 โยกเงิน (บัญชี ↔️ เงินสด)</button>
     </div>
 
     <section class="card update-card">
-      <div class="head"><h2>เพิ่มรายการใหม่</h2></div>
-      <div class="row"><div class="col"><label>วันที่ซื้อ</label><input type="date" id="order-date" onchange="loadDashboard()"></div></div>
-      <div class="row">
-        <div class="col"><label>รายการสินค้า</label><input type="text" id="order-item"></div>
-        <div class="col"><label>ร้านค้า</label><input type="text" id="order-supplier"></div>
-      </div>
-      <div class="row">
-        <div class="col"><label>ราคา/หน่วย</label><input type="number" id="order-price" placeholder="0.00"></div>
-        <div class="col"><label>จำนวน</label><input type="number" id="order-qty" placeholder="1" value="1"></div>
-      </div>
-      <div class="row">
-        <div class="col"><label>ค่าขนส่ง</label><input type="number" id="order-shipping" placeholder="0.00"></div>
-        <div class="col"><label>ส่วนลด</label><input type="number" id="order-discount" placeholder="0.00"></div>
-      </div>
-      <div class="row">
-        <div class="col"><label>หมายเหตุ</label><input type="text" id="order-note"></div>
-      </div>
-      <div class="total-preview">ยอดรวมสุทธิ: <span id="total-display">0</span> บาท</div>
-      <button class="btn" id="btn-save" onclick="submitOrder()" style="width:100%; margin-top:12px;">✅ บันทึกรายการ</button>
-    </section>
+  <div class="head"><h2>เพิ่มรายการใหม่</h2></div>
+  <div class="row">
+    <div class="col"><label>วันที่ซื้อ</label><input type="date" id="order-date" onchange="loadDashboard()"></div>
+  </div>
+  <div class="row">
+    <div class="col"><label>รายการสินค้า</label><input type="text" id="order-item"></div>
+    <div class="col"><label>ร้านค้า</label><input type="text" id="order-supplier"></div>
+  </div>
+  <div class="row">
+    <div class="col"><label>ราคา/หน่วย</label><input type="number" id="order-price" placeholder="0.00"></div>
+    <div class="col"><label>จำนวน</label><input type="number" id="order-qty" placeholder="1" value="1"></div>
+  </div>
+  <div class="row">
+    <div class="col"><label>ค่าขนส่ง</label><input type="number" id="order-shipping" placeholder="0.00"></div>
+    <div class="col"><label>ส่วนลด</label><input type="number" id="order-discount" placeholder="0.00"></div>
+  </div>
+  
+  <div class="row">
+    <div class="col">
+      <label>ช่องทางชำระ</label>
+      <select id="order-pay-type">
+        <option value="โอน">📱 โอน (Digital)</option>
+        <option value="เงินสด">💵 เงินสด (Cash)</option>
+      </select>
+    </div>
+    <div class="col"><label>หมายเหตุ</label><input type="text" id="order-note"></div>
+  </div>
+  
+  <div class="total-preview">ยอดรวมสุทธิ: <span id="total-display">0</span> บาท</div>
+  <button class="btn" id="btn-save" onclick="submitOrder()" style="width:100%; margin-top:12px;">✅ บันทึกรายการ</button>
+</section>
 
     <section class="card">
       <div class="head"><h2>รายการเดือนนี้</h2></div>
@@ -74,6 +116,48 @@
       </div>
     </div>
   </div>
+
+  <div id="transfer-modal" class="modal">
+  <div class="modal-content">
+    <h3 style="margin-bottom: 15px;">🔄 บันทึกโยกเงิน</h3>
+    
+    <div class="row" style="margin-bottom: 10px;">
+      <div class="col">
+        <label>วันที่</label>
+        <input type="date" id="transfer-date">
+      </div>
+    </div>
+    
+    <div class="row" style="margin-bottom: 10px;">
+      <div class="col">
+        <label>รูปแบบการโยกเงิน</label>
+        <select id="transfer-type" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; height: 36px; font-family: inherit;">
+          <option value="DigitalToCash">🏧 ถอนออกมาใช้ (บัญชี ➡️ เงินสด)</option>
+          <option value="CashToDigital">🏦 ฝากเข้าธนาคาร (เงินสด ➡️ บัญชี)</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="row" style="margin-bottom: 10px;">
+      <div class="col">
+        <label>จำนวนเงิน</label>
+        <input type="number" id="transfer-amount" placeholder="0.00">
+      </div>
+    </div>
+    
+    <div class="row" style="margin-bottom: 15px;">
+      <div class="col">
+        <label>หมายเหตุ</label>
+        <input type="text" id="transfer-note" placeholder="เช่น กดเงินสำรองจ่ายหน้าร้าน">
+      </div>
+    </div>
+    
+    <div style="display:flex; gap:10px;">
+      <button class="btn" onclick="submitTransfer()" style="flex:1; background: #3b82f6;">บันทึก</button>
+      <button class="btn" onclick="closeTransferModal()" style="flex:1; background:#ccc; color:#333;">ยกเลิก</button>
+    </div>
+  </div>
+</div>
 
   <script src="script_orders.js"></script>
 </body>
