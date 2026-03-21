@@ -1,4 +1,4 @@
-// ⚠️ URL ล่าสุดของคุณ (ตรวจสอบให้ตรงกับตัวที่ Deploy ใหม่ล่าสุด)
+// ⚠️ URL ล่าสุดของคุณ 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwcfYozMfzchT98X2rOZnT_9otOFrkGMxosTixCBUMJvIsAhN62CUaZoH8gM_L3Ol_mA/exec';
 
 const $ = (id) => document.getElementById(id);
@@ -24,21 +24,54 @@ function init() {
   $('sale-date').value = new Date().toISOString().split('T')[0];
   updateSizeList();
   loadSalesHistory();
+  
+  // 🌟 ดักจับการพิมพ์ เพื่อให้คำนวณส่วนลดโชว์แบบ Real-time
+  $('prom-type').addEventListener('change', toggleDiscountType);
+  $('prom-val').addEventListener('input', calcPreviewDiscount);
+  $('prod-qty').addEventListener('input', calcPreviewDiscount);
+  $('prod-price').addEventListener('input', calcPreviewDiscount);
+}
+
+// 🌟 สลับข้อความ Label ตามประเภทส่วนลด
+function toggleDiscountType() {
+  const type = $('prom-type').value;
+  const lbl = $('lbl-prom-val');
+  if (type === 'perItem') {
+    lbl.textContent = 'ราคา/ตัวที่ลด (฿)';
+  } else {
+    lbl.textContent = 'ส่วนลด (ProM.)';
+  }
+  calcPreviewDiscount();
+}
+
+// 🌟 คำนวณยอดส่วนลดรวมโชว์ให้เห็นก่อนกดเข้าตะกร้า
+function calcPreviewDiscount() {
+  const type = $('prom-type').value;
+  const val = parseFloat($('prom-val').value) || 0;
+  const qty = parseInt($('prod-qty').value) || 0;
+  const price = parseFloat($('prod-price').value) || 0;
+  
+  let totalDisc = 0;
+  if (type === 'baht') totalDisc = val;
+  else if (type === 'percent') totalDisc = (price * qty) * (val / 100);
+  else if (type === 'perItem') totalDisc = val * qty; // ลดต่อตัว x จำนวนหนู
+  
+  const previewBox = $('disc-preview-box');
+  if (totalDisc > 0) {
+     previewBox.style.display = 'block';
+     $('disc-preview-total').textContent = totalDisc.toLocaleString();
+  } else {
+     previewBox.style.display = 'none';
+  }
 }
 
 // --- ส่วนจัดการ Settings (ปุ่มเฟือง) ---
-function openSettings() {
-  $('settings-modal').style.display = 'flex';
-}
-
-function closeSettings() {
-  $('settings-modal').style.display = 'none';
-}
+function openSettings() { $('settings-modal').style.display = 'flex'; }
+function closeSettings() { $('settings-modal').style.display = 'none'; }
 
 async function saveSettings() {
-  const salesUrl = $('sheet-url-input').value; // ลิงก์ไฟล์ขาย
-  const walletUrl = $('wallet-url-input') ? $('wallet-url-input').value : ""; // 🌟 ลิงก์ไฟล์รายจ่าย (กระเป๋าเงิน)
-  
+  const salesUrl = $('sheet-url-input').value; 
+  const walletUrl = $('wallet-url-input') ? $('wallet-url-input').value : ""; 
   if (!salesUrl) return alert('กรุณาวางลิงก์ Google Sheet สำหรับบันทึกยอดขาย');
   
   const btn = event.target;
@@ -47,44 +80,21 @@ async function saveSettings() {
   btn.disabled = true;
 
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ 
-        action: 'setSheetUrl', 
-        url: salesUrl,
-        walletUrl: walletUrl // 🌟 ส่งลิงก์กระเป๋าเงินไปเก็บด้วย
-      })
-    });
-    
+    const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'setSheetUrl', url: salesUrl, walletUrl: walletUrl }) });
     const result = await res.json();
-    if (result.status === 'success') {
-      alert('✅ ' + result.message);
-      closeSettings();
-    } else {
-      throw new Error(result.message);
-    }
-  } catch (err) {
-    alert('❌ Error: ' + err.message);
-  } finally {
-    btn.innerText = oldTxt;
-    btn.disabled = false;
-  }
+    if (result.status === 'success') { alert('✅ ' + result.message); closeSettings(); } 
+    else throw new Error(result.message);
+  } catch (err) { alert('❌ Error: ' + err.message); } 
+  finally { btn.innerText = oldTxt; btn.disabled = false; }
 }
-
-// ------------------------------------
 
 function updateSizeList() {
   const animal = $('prod-animal').value;
   const sizeSel = $('prod-size');
   sizeSel.innerHTML = '';
-  
   const list = (animal === 'Mice') ? MICE_SIZES : RAT_SIZES;
   list.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s;
-    opt.textContent = s;
-    sizeSel.appendChild(opt);
+    const opt = document.createElement('option'); opt.value = s; opt.textContent = s; sizeSel.appendChild(opt);
   });
   updatePrice();
 }
@@ -96,6 +106,7 @@ function updatePrice() {
   const priceType = isWholesale ? 'wholesale' : 'retail';
   const price = PRICES[animal][priceType][size] || 0;
   $('prod-price').value = price;
+  calcPreviewDiscount(); // 🌟 อัปเดตส่วนลดเวลาเปลี่ยนราคา
 }
 
 function addToCart() {
@@ -111,31 +122,36 @@ function addToCart() {
   let promVal = parseFloat($('prom-val').value) || 0;
   const promType = $('prom-type').value;
 
-  if (!price || !qty || qty <= 0) {
-    alert('กรุณาระบุราคาและจำนวน');
-    return;
-  }
+  if (!price || !qty || qty <= 0) { alert('กรุณาระบุราคาและจำนวน'); return; }
 
   let discountBaht = 0;
   let totalRaw = price * qty;
   
   if (promVal > 0) {
-    if (promType === 'percent') {
-      discountBaht = totalRaw * (promVal / 100);
-    } else {
-      discountBaht = promVal;
-    }
+    if (promType === 'percent') discountBaht = totalRaw * (promVal / 100);
+    else if (promType === 'perItem') discountBaht = promVal * qty; // 🌟 คำนวณลดต่อตัว
+    else discountBaht = promVal;
+  }
+
+  // 🌟 ปรับคำที่โชว์ในตะกร้าให้ตรงกับประเภทที่ลด
+  let displayTxt = '';
+  if (promVal > 0) {
+      if (promType === 'percent') displayTxt = `ลด ${promVal}%`;
+      else if (promType === 'perItem') displayTxt = `ลดตัวละ ${promVal}บ.`;
+      else displayTxt = `ลด ${promVal}บ.`;
   }
 
   cart.push({ 
     animal, size, price, qty, isLive,
     discount: discountBaht,
-    promDisplay: promVal > 0 ? `(ลด ${promVal} ${promType === 'percent'?'%':'บ.'})` : ''
+    promDisplay: displayTxt ? `(${displayTxt})` : ''
   });
 
   $('prod-qty').value = '';
   $('prom-val').value = '';
   $('prod-live').checked = false; 
+  $('disc-preview-box').style.display = 'none'; // 🌟 ซ่อนกล่องสรุปหลังเพิ่มลงตะกร้า
+  
   renderCart();
 }
 
@@ -144,11 +160,7 @@ function renderCart() {
   const wrapper = $('cart-container');
   container.innerHTML = '';
   
-  if (cart.length === 0) {
-    wrapper.style.display = 'none';
-    $('grand-total').textContent = '0';
-    return;
-  }
+  if (cart.length === 0) { wrapper.style.display = 'none'; $('grand-total').textContent = '0'; return; }
   
   wrapper.style.display = 'block';
   let totalNet = 0;
@@ -163,7 +175,7 @@ function renderCart() {
       <div>
         <b>${item.animal} ${item.size}</b> ${condition}<br>
         ${item.price} x ${item.qty} = ${(item.price * item.qty).toLocaleString()} 
-        <span style="color:red; font-size:12px;">${item.promDisplay ? '- ' + item.discount + ' บ.' : ''}</span>
+        <span style="color:red; font-size:12px;">${item.promDisplay ? '- ' + item.discount + ' บ. ' + item.promDisplay : ''}</span>
       </div>
       <div style="font-weight:bold;">${sum.toLocaleString()} บ.</div>
       <div class="cart-del" onclick="remItem(${index})">×</div>
@@ -173,10 +185,7 @@ function renderCart() {
   $('grand-total').textContent = totalNet.toLocaleString();
 }
 
-function remItem(index) {
-  cart.splice(index, 1);
-  renderCart();
-}
+function remItem(index) { cart.splice(index, 1); renderCart(); }
 
 async function submitSaleOrder() {
   if (cart.length === 0) return alert('ตะกร้าว่างเปล่า');
@@ -191,38 +200,16 @@ async function submitSaleOrder() {
 
   try {
     const payload = {
-      action: 'saveSales',
-      date: date,
-      orderNo: no,
-      items: cart,
-      paymentType: $('pay-type').value,
-      shipMethod: $('ship-method').value,
-      shipCost: parseFloat($('ship-cost').value) || 0,
-      shipPaid: parseFloat($('ship-paid').value) || 0
+      action: 'saveSales', date: date, orderNo: no, items: cart, paymentType: $('pay-type').value,
+      shipMethod: $('ship-method').value, shipCost: parseFloat($('ship-cost').value) || 0, shipPaid: parseFloat($('ship-paid').value) || 0
     };
 
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
-
+    const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
     const result = await res.json();
-    if (result.status === 'success') {
-      alert('✅ บันทึกสำเร็จ!');
-      cart = [];
-      renderCart();
-      $('sale-no').value = '';
-      loadSalesHistory(); 
-    } else {
-      throw new Error(result.message);
-    }
-  } catch (err) {
-    alert('❌ Error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = oldTxt;
-  }
+    if (result.status === 'success') { alert('✅ บันทึกสำเร็จ!'); cart = []; renderCart(); $('sale-no').value = ''; loadSalesHistory(); } 
+    else throw new Error(result.message);
+  } catch (err) { alert('❌ Error: ' + err.message); } 
+  finally { btn.disabled = false; btn.textContent = oldTxt; }
 }
 
 // ==========================================
@@ -236,56 +223,39 @@ async function loadSalesHistory() {
   if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ... ⏳</td></tr>';
 
   try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getSalesHistory', month: selectedMonth === 'current' ? '' : selectedMonth })
-    });
+    const response = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getSalesHistory', month: selectedMonth === 'current' ? '' : selectedMonth }) });
     const result = await response.json();
     if (result.status === 'success') {
       const data = result.data;
       if (monthSelect && (monthSelect.options.length <= 1 || selectedMonth === 'current' || selectedMonth === '')) {
         monthSelect.innerHTML = "";
         data.months.forEach(m => {
-          const option = document.createElement("option");
-          option.value = m.value; option.text = m.label;
-          if (m.value === data.selectedMonth) option.selected = true;
-          monthSelect.appendChild(option);
+          const option = document.createElement("option"); option.value = m.value; option.text = m.label;
+          if (m.value === data.selectedMonth) option.selected = true; monthSelect.appendChild(option);
         });
       }
       renderHistoryTable(data.records);
     }
-  } catch (error) {
-    console.error(error);
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาด</td></tr>';
-  }
+  } catch (error) { if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาด</td></tr>'; }
 }
 
 function renderHistoryTable(records) {
-  const tbody = $('history-body');
-  const summary = $('history-summary');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+  const tbody = $('history-body'); const summary = $('history-summary');
+  if (!tbody) return; tbody.innerHTML = '';
   let sumPrice = 0; let sumShipProfit = 0;
 
   if (!records || records.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูล</td></tr>';
-    if (summary) summary.style.display = 'none';
-    return;
+    if (summary) summary.style.display = 'none'; return;
   }
 
   records.forEach(item => {
-    const tr = document.createElement('tr');
-    tr.style.borderBottom = "1px solid #eee";
-    const shipCharge = parseFloat(item.shipCharge) || 0;
-    const shipActual = parseFloat(item.shipActual) || 0;
-    const shipProfit = shipCharge - shipActual;
-    const price = parseFloat(item.price) || 0;
+    const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
+    const shipCharge = parseFloat(item.shipCharge) || 0; const shipActual = parseFloat(item.shipActual) || 0;
+    const shipProfit = shipCharge - shipActual; const price = parseFloat(item.price) || 0;
     sumPrice += price; sumShipProfit += shipProfit;
 
-    const typeLabel = (item.type === 'เป็น' || item.type === 'Live') 
-      ? '<span style="color:green; font-weight:bold;">[เป็น]</span>' 
-      : '<span style="color:blue; font-weight:bold;">[แช่]</span>';
+    const typeLabel = (item.type === 'เป็น' || item.type === 'Live') ? '<span style="color:green; font-weight:bold;">[เป็น]</span>' : '<span style="color:blue; font-weight:bold;">[แช่]</span>';
 
     tr.innerHTML = `
       <td style="padding:10px 8px;">${item.date}</td>

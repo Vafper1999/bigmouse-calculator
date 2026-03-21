@@ -1,11 +1,8 @@
-// ⚠️ LIFF ID (ใส่ไว้เหมือนเดิม ไม่เสียหายครับ เผื่ออนาคตใช้ดึงโปรไฟล์แอดมิน)
+// ⚠️ LIFF ID 
 const LIFF_ID = "2008984741-8hcXjikx"; 
 
-// ⚠️⚠️⚠️ สำคัญมาก! ใส่ URL ของ Web App ที่ Deploy แล้วตรงนี้ ⚠️⚠️⚠️
+// ⚠️⚠️⚠️ สำคัญมาก! ใส่ URL ของ Web App
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby4qaEDYaAnWM2qB7Zhd8vJ2nZGbFU-m9D4vOkvyelDIpwIYJrCD18bGKwMH-4QA3UG/exec";
-
-// (Token นี้จริงๆ ต้องใช้ที่หลังบ้าน Code.gs แต่ถ้าจะแปะไว้เป็น Reference ก็ได้ครับ)
-// const CHANNEL_ACCESS_TOKEN = '...'; 
 
 // ⚠️ ใส่เบอร์โทร หรือ เลขบัตร ปชช. ที่ผูกพร้อมเพย์ (ห้ามมีขีด)
 const PROMPTPAY_ID = "0990063438";
@@ -33,178 +30,101 @@ const fmt = n => Number(n).toLocaleString("th-TH", {minimumFractionDigits:(n%1?2
 const getSelectedAnimals = () => Array.from(document.querySelectorAll('input[name="animal"]:checked')).map(i=>i.value);
 const animalLabel = key => key === 'mice' ? 'Mice' : 'Rat';
 let qtyInputs = [];
+let customPriceInputs = []; // 🌟 เก็บ input ราคาพิเศษ
 
-function getDiscount(sub){
+// 🌟 คำนวณส่วนลดท้ายบิล (สำหรับเปอร์เซ็นต์ หรือ ลดเหมา)
+function getGlobalDiscount(subNet){ 
   const type = $('#promoType')?.value || 'none';
   const raw = parseFloat($('#promoValue')?.value || '0') || 0;
   let d = 0;
-  if(type==='baht') d = Math.max(0, Math.min(raw, sub));
-  else if(type==='percent') d = Math.max(0, Math.min(100, raw))*sub/100;
+  if(type==='baht') d = Math.max(0, Math.min(raw, subNet));
+  else if(type==='percent') d = Math.max(0, Math.min(100, raw))*subNet/100;
   return d;
 }
 
 // ============================================================
-// 🆕 ฟังก์ชันแปลง URL ของ Google Sheet เป็น CSV export URL
+// 🆕 ฟังก์ชัน Google Sheet Customers 
 // ============================================================
 function getSheetIdFromUrl(url) {
   const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   return match ? match[1] : null;
 }
 
-// ============================================================
-// 🆕 ฟังก์ชันโหลดข้อมูลจาก Google Sheet (รองรับ Auto Load)
-// ============================================================
 async function loadCustomersFromSheet(isAutoLoad = false) {
   const sheetUrl = $('#sheetUrlInput').value.trim();
   const select = $('#customerSelect');
-  
-  if (!sheetUrl) {
-    if (!isAutoLoad) Swal.fire('แจ้งเตือน', 'กรุณาใส่ลิงก์ Google Sheet ก่อนครับ', 'warning');
-    return;
-  }
-  
+  if (!sheetUrl) { if (!isAutoLoad) Swal.fire('แจ้งเตือน', 'กรุณาใส่ลิงก์ Google Sheet ก่อนครับ', 'warning'); return; }
   const sheetId = getSheetIdFromUrl(sheetUrl);
-  
-  if (!sheetId) {
-    if (!isAutoLoad) Swal.fire('ผิดพลาด', 'ลิงก์ไม่ถูกต้อง กรุณาคัดลอกลิงก์จาก Google Sheets ใหม่', 'error');
-    return;
-  }
+  if (!sheetId) { if (!isAutoLoad) Swal.fire('ผิดพลาด', 'ลิงก์ไม่ถูกต้อง', 'error'); return; }
   
   try {
-    if (isAutoLoad) {
-        select.innerHTML = '<option value="" selected>🔄 กำลังโหลดข้อมูลเก่า...</option>';
-    } else {
-        select.innerHTML = '<option value="" selected>⏳ กำลังโหลดข้อมูล...</option>';
-        Swal.fire({ title: 'กำลังโหลดข้อมูล...', didOpen: () => Swal.showLoading() });
-    }
+    if (isAutoLoad) select.innerHTML = '<option value="" selected>🔄 กำลังโหลดข้อมูลเก่า...</option>';
+    else { select.innerHTML = '<option value="" selected>⏳ กำลังโหลดข้อมูล...</option>'; Swal.fire({ title: 'กำลังโหลดข้อมูล...', didOpen: () => Swal.showLoading() }); }
     
-    // โหลดผ่าน CSV export ของ Google Sheet
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-    const response = await fetch(csvUrl);
-    
-    if (!response.ok) {
-      throw new Error('ไม่สามารถเข้าถึง Google Sheet ได้\nกรุณาตรวจสอบว่า Sheet เปิดแชร์เป็น "Anyone with the link can view"');
-    }
+    const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`);
+    if (!response.ok) throw new Error('ไม่สามารถเข้าถึง Google Sheet ได้\nตรวจสอบสิทธิ์การแชร์เป็น "Anyone with the link"');
     
     const csvText = await response.text();
     const rows = parseCSV(csvText);
-    
-    if (rows.length < 2) {
-      throw new Error('ไม่พบข้อมูลในชีต');
-    }
+    if (rows.length < 2) throw new Error('ไม่พบข้อมูลในชีต');
     
     customersData = [];
-    
-    // เริ่มอ่านจากแถวที่ 2 (index 1) เพราะแถวแรกเป็น Header
     for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      // ตรวจสอบว่ามี ID (col 0) และไม่ว่าง
-      if (row[0] && row[0].trim() !== '') {
-        customersData.push({
-          id: row[0].trim(),
-          name: row[1] ? row[1].trim() : 'ไม่ระบุชื่อ'
-        });
+      if (rows[i][0] && rows[i][0].trim() !== '') {
+        customersData.push({ id: rows[i][0].trim(), name: rows[i][1] ? rows[i][1].trim() : 'ไม่ระบุชื่อ' });
       }
     }
     
     select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
-    
     if (customersData.length === 0) {
       select.innerHTML = '<option value="" selected>ไม่พบข้อมูลลูกค้า</option>';
       if (!isAutoLoad) Swal.fire('ไม่พบข้อมูล', 'ไม่พบข้อมูลลูกค้าในชีต', 'warning');
       return;
     }
     
-    // เติมข้อมูลลง Dropdown
-    customersData.forEach(customer => {
+    customersData.forEach(c => {
       const option = document.createElement('option');
-      option.value = customer.id;
-      option.textContent = customer.name;
-      select.appendChild(option);
+      option.value = c.id; option.textContent = c.name; select.appendChild(option);
     });
-    
-    // ✅ บันทึกลิงก์ลง localStorage เพื่อใช้ครั้งหน้า
     localStorage.setItem('sheetUrl', sheetUrl);
     
-    if (!isAutoLoad) {
-        Swal.fire({
-          icon: 'success',
-          title: 'โหลดข้อมูลสำเร็จ!',
-          text: `พบลูกค้า ${customersData.length} คน`,
-          timer: 2000,
-          showConfirmButton: false
-        });
-    } else {
-        console.log(`✅ Auto-load เสร็จสิ้น: พบ ${customersData.length} คน`);
-    }
-    
+    if (!isAutoLoad) Swal.fire({ icon: 'success', title: 'โหลดข้อมูลสำเร็จ!', text: `พบลูกค้า ${customersData.length} คน`, timer: 2000, showConfirmButton: false });
   } catch (error) {
-    console.error('🔴 Error:', error);
     select.innerHTML = '<option value="" selected>❌ เกิดข้อผิดพลาด</option>';
-    
-    if (!isAutoLoad) {
-        Swal.fire({
-          icon: 'error',
-          title: 'ไม่สามารถโหลดข้อมูลได้',
-          text: error.message,
-          confirmButtonText: 'ตกลง'
-        });
-    }
+    if (!isAutoLoad) Swal.fire({ icon: 'error', title: 'ไม่สามารถโหลดข้อมูลได้', text: error.message, confirmButtonText: 'ตกลง' });
   }
 }
 
-// ============================================================
-// 🆕 ฟังก์ชันแปลง CSV เป็น Array
-// ============================================================
 function parseCSV(text) {
-  const rows = [];
-  let currentRow = [];
-  let currentField = '';
-  let inQuotes = false;
-  
+  const rows = []; let currentRow = []; let currentField = ''; let inQuotes = false;
   for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
-    
+    const char = text[i]; const nextChar = text[i + 1];
     if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        currentField += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      currentRow.push(currentField);
-      currentField = '';
+      if (inQuotes && nextChar === '"') { currentField += '"'; i++; } else inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) { currentRow.push(currentField); currentField = '';
     } else if ((char === '\n' || char === '\r') && !inQuotes) {
       if (char === '\r' && nextChar === '\n') i++;
       currentRow.push(currentField);
-      if (currentRow.some(field => field.trim() !== '')) {
-        rows.push(currentRow);
-      }
-      currentRow = [];
-      currentField = '';
-    } else {
-      currentField += char;
-    }
+      if (currentRow.some(f => f.trim() !== '')) rows.push(currentRow);
+      currentRow = []; currentField = '';
+    } else currentField += char;
   }
-  
   if (currentField || currentRow.length > 0) {
     currentRow.push(currentField);
-    if (currentRow.some(field => field.trim() !== '')) {
-      rows.push(currentRow);
-    }
+    if (currentRow.some(f => f.trim() !== '')) rows.push(currentRow);
   }
-  
   return rows;
 }
 
-// ---- Build Table (ฟังก์ชันเดิม 100%) ----
+// ============================================================
+// 🌟 Build Table (เปลี่ยนเป็นช่องกรอกราคาขายจริง)
+// ============================================================
 function buildTable(){
   const animals = getSelectedAnimals();
   const ptype = document.querySelector('input[name="ptype"]:checked').value;
   const priceIdx = ptype==='retail'?1:2;
   qtyInputs=[];
+  customPriceInputs=[];
 
   if(animals.length===0){
     $("#tableWrap").innerHTML='<div class="hint">โปรดเลือกอย่างน้อย 1 ประเภท (Mice/Rat)</div>';
@@ -219,6 +139,7 @@ function buildTable(){
         <tr>
           <td>${size}</td>
           <td class="muted">${fmt(unit)}</td>
+          <td><input type="number" min="0" step="0.5" data-animal="${animal}" data-size="${size}" class="custom-price" placeholder="${unit}" style="width:65px; text-align:center; border: 1px solid #3b82f6; background: #eff6ff;"></td>
           <td><input type="number" min="0" step="1" data-animal="${animal}" data-type="fresh" data-size="${size}" data-unit="${unit}" class="qty" placeholder="0"></td>
           <td><input type="number" min="0" step="1" data-animal="${animal}" data-type="frozen" data-size="${size}" data-unit="${unit}" class="qty" placeholder="0"></td>
           <td class="line" data-animal="${animal}" data-size="${size}">0</td>
@@ -227,53 +148,76 @@ function buildTable(){
     html += `
       <div class="head" style="margin-top:6px"><h2>${animalLabel(animal)}</h2></div>
       <table><thead><tr>
-        <th>ไซส์</th><th>ราคา</th><th>แช่ (ตัว)</th><th>เป็น (ตัว)</th><th>รวม</th>
+        <th>ไซส์</th><th>ราคาปกติ</th><th>ราคาขาย</th><th>แช่ (ตัว)</th><th>เป็น (ตัว)</th><th>รวม</th>
       </tr></thead><tbody>${rows}</tbody></table>`;
   });
 
   $("#tableWrap").innerHTML=html;
+  
   qtyInputs=Array.from(document.querySelectorAll(".qty"));
+  customPriceInputs=Array.from(document.querySelectorAll(".custom-price"));
   qtyInputs.forEach(i=> i.addEventListener("input", recalc));
+  customPriceInputs.forEach(i=> i.addEventListener("input", recalc));
   recalc();
 }
 
-// ---- Recalc (ฟังก์ชันเดิม 100%) ----
+// ============================================================
+// 🌟 Recalc (คำนวณส่วนลดแบบราคาขายจริง)
+// ============================================================
 function recalc(){
   const shipMethod = $("#shipMethod").value;
   const shipCostEl = $("#shipCost");
   if (shipMethod === "รับเอง"){ shipCostEl.value = 0; shipCostEl.disabled = true; }
   else { shipCostEl.disabled = false; }
-
   if (!$("#shipCost").value) $("#shipCost").value = 0;
 
-  let sub = 0;
+  let subFullPrice = 0; // ยอดรวมแบบไม่ลด
+  let customDiscTotal = 0; // ยอดรวมส่วนลดจากที่กรอกราคาพิเศษ
+
   const animals = getSelectedAnimals();
   animals.forEach(a=>{
     DATA[a].forEach(([size])=>{
       const f = document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="fresh"]`);
       const z = document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="frozen"]`);
+      const cp = document.querySelector(`input.custom-price[data-animal="${a}"][data-size="${size}"]`);
+      
       const qf = parseInt(f?.value||0,10)||0;
       const qz = parseInt(z?.value||0,10)||0;
       const unit = parseFloat(f?.dataset.unit||z?.dataset.unit||0);
-      const line = (qf+qz)*unit;
-      sub+=line;
+      
+      // 🌟 ใช้ราคาพิเศษ ถ้าระบุ, ถ้าไม่ระบุใช้ราคาปกติ
+      const effectivePrice = (cp && cp.value !== "") ? parseFloat(cp.value) : unit;
+      const discPerItem = unit - effectivePrice; 
+      
+      const totalQty = qf + qz;
+      subFullPrice += totalQty * unit; // บวกยอดเต็ม
+      if (discPerItem > 0) customDiscTotal += totalQty * discPerItem; // บวกยอดที่ลดให้
+
+      const lineNet = totalQty * effectivePrice;
       const cell=document.querySelector(`.line[data-animal="${a}"][data-size="${size}"]`);
-      if(cell) cell.textContent=fmt(line);
+      if(cell) cell.textContent=fmt(lineNet);
     });
   });
 
-  const discount=getDiscount(sub);
-  const ship=parseFloat($("#shipCost").value||0);
-  const grand=sub-discount+ship;
-  $("#subTotal").textContent=fmt(sub);
-  $("#promoTotal").textContent=fmt(discount);
+  const subNetAfterCustom = subFullPrice - customDiscTotal;
+  const globalDiscount = getGlobalDiscount(subNetAfterCustom); // คำนวณโปรท้ายบิล
+  const totalDiscount = customDiscTotal + globalDiscount; // ส่วนลดรวมทั้งหมด
+  
+  const ship = parseFloat($("#shipCost").value||0);
+  const grand = subFullPrice - totalDiscount + ship;
+  
+  $("#subTotal").textContent=fmt(subFullPrice);
+  $("#promoTotal").textContent=fmt(totalDiscount);
   $("#shipTotal").textContent=fmt(ship);
   $("#grandTotal").textContent=fmt(grand);
-  buildMessage(sub,ship,discount);
+  
+  buildMessage(subFullPrice, ship, totalDiscount, customDiscTotal, globalDiscount);
 }
 
-// ---- Build Message (ฟังก์ชันเดิม 100%) ----
-function buildMessage(sub, ship, discount){
+// ============================================================
+// 🌟 Build Message
+// ============================================================
+function buildMessage(subFullPrice, ship, totalDiscount, customDiscTotal, globalDiscount){
   const prefix=$("#msgPrefix").value.trim();
   const suffixTpl=$("#msgSuffix").value.trim();
   const shipMethod=$("#shipMethod").value;
@@ -282,122 +226,172 @@ function buildMessage(sub, ship, discount){
   const animals=getSelectedAnimals();
   const header=`${prefix} (${pLabel}) ${animals.map(animalLabel).join(' + ')}`;
   const body=[];
+  
   animals.forEach(a=>{
     DATA[a].forEach(([size])=>{
       const f=document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="fresh"]`);
       const z=document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="frozen"]`);
+      const cp=document.querySelector(`input.custom-price[data-animal="${a}"][data-size="${size}"]`);
+      
       const unit=parseFloat(f?.dataset.unit||z?.dataset.unit||0);
       const qf=parseInt(f?.value||0,10)||0;
       const qz=parseInt(z?.value||0,10)||0;
-      if(qf) body.push(`[${animalLabel(a)}] ${size} (แช่) ${qf} ตัว ราคา ${fmt(qf*unit)} บาท`);
-      if(qz) body.push(`[${animalLabel(a)}] ${size} (เป็น) ${qz} ตัว ราคา ${fmt(qz*unit)} บาท`);
+      
+      const effectivePrice = (cp && cp.value !== "") ? parseFloat(cp.value) : unit;
+      const discPerItem = unit - effectivePrice;
+
+      // แจกแจงแช่
+      if(qf) {
+        let txt = `[${animalLabel(a)}] ${size} (แช่) ${qf} ตัว ราคา ${fmt(qf*unit)} บาท`;
+        if (discPerItem > 0) txt += `\n   ↳ (ราคาพิเศษ ${fmt(effectivePrice)}บ./ตัว ประหยัดไป ${fmt(qf*discPerItem)}บ.)`;
+        body.push(txt);
+      }
+      // แจกแจงเป็น
+      if(qz) {
+        let txt = `[${animalLabel(a)}] ${size} (เป็น) ${qz} ตัว ราคา ${fmt(qz*unit)} บาท`;
+        if (discPerItem > 0) txt += `\n   ↳ (ราคาพิเศษ ${fmt(effectivePrice)}บ./ตัว ประหยัดไป ${fmt(qz*discPerItem)}บ.)`;
+        body.push(txt);
+      }
     });
   });
-  if(discount>0) body.push(`ส่วนลด ${fmt(discount)} บาท`);
+  
+  if(globalDiscount>0) body.push(`\nส่วนลดเพิ่มเติม ${fmt(globalDiscount)} บาท`);
+  if(totalDiscount>0) body.push(`\n🎉 รวมประหยัดไปทั้งหมด ${fmt(totalDiscount)} บาท`);
+  
   if(ship>0 && shipMethod!=="รับเอง") body.push(`ขนส่ง ${shipMethod} ${fmt(ship)} บาท`);
-  const totalText=suffixTpl.replace("{TOTAL}",fmt(sub-discount+ship));
-  $("#messageBox").textContent=`${header}\n${body.join("\n")}\n\n${totalText}`.trim();
+  
+  const totalText=suffixTpl.replace("{TOTAL}",fmt(subFullPrice - totalDiscount + ship));
+  $("#messageBox").textContent=`${header}\n\n${body.join("\n")}\n\n${totalText}`.trim();
 }
 
-// ---- Receipt Modal (ฟังก์ชันเดิม) ----
+// ---- Receipt Modal ----
 function openReceipt(){ $("#billContent").innerHTML=buildReceiptHTML(); $("#billModal").classList.add("open"); }
 function closeReceipt(){ $("#billModal").classList.remove("open"); }
 async function copyReceipt(){ await navigator.clipboard.writeText($("#billContent").innerText); }
 function buildReceiptHTML(){
     const now=new Date();
     let html=`<div class="meta">วันที่ ${now.toLocaleDateString('th-TH')}</div><table><thead><tr><th>รายการ</th><th>ยอด</th></tr></thead><tbody>`;
-    let sub=0;
+    
+    let subFullPrice = 0;
+    let customDiscTotal = 0;
+    
     const animals=getSelectedAnimals();
     animals.forEach(a=>{
         DATA[a].forEach(([size])=>{
         const f=document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="fresh"]`);
         const z=document.querySelector(`input.qty[data-animal="${a}"][data-size="${size}"][data-type="frozen"]`);
+        const cp=document.querySelector(`input.custom-price[data-animal="${a}"][data-size="${size}"]`);
+        
         const unit=parseFloat(f?.dataset.unit||z?.dataset.unit||0);
         const qf=parseInt(f?.value||0,10)||0;
         const qz=parseInt(z?.value||0,10)||0;
-        if(qf){const line=qf*unit;sub+=line;html+=`<tr><td>[${animalLabel(a)}] ${size} (แช่) × ${qf}</td><td>${fmt(line)}</td></tr>`;}
-        if(qz){const line=qz*unit;sub+=line;html+=`<tr><td>[${animalLabel(a)}] ${size} (เป็น) × ${qz}</td><td>${fmt(line)}</td></tr>`;}
+        
+        const effectivePrice = (cp && cp.value !== "") ? parseFloat(cp.value) : unit;
+        const discPerItem = unit - effectivePrice;
+        
+        if (discPerItem > 0) customDiscTotal += (qf + qz) * discPerItem;
+
+        if(qf){
+            subFullPrice += qf*unit;
+            html+=`<tr><td>[${animalLabel(a)}] ${size} (แช่) × ${qf}</td><td>${fmt(qf*unit)}</td></tr>`;
+        }
+        if(qz){
+            subFullPrice += qz*unit;
+            html+=`<tr><td>[${animalLabel(a)}] ${size} (เป็น) × ${qz}</td><td>${fmt(qz*unit)}</td></tr>`;
+        }
         });
     });
-    const discount=getDiscount(sub);
+    
+    const globalDiscount = getGlobalDiscount(subFullPrice - customDiscTotal);
+    const totalDiscount = customDiscTotal + globalDiscount;
     const ship=parseFloat($("#shipCost").value||0);
     const shipMethod=$("#shipMethod").value;
-    const grand=sub-discount+ship;
-    html+=`</tbody><tfoot><tr><td>รวม</td><td>${fmt(sub)}</td></tr>${discount>0?`<tr><td>ส่วนลด</td><td>-${fmt(discount)}</td></tr>`:''}${ship>0?`<tr><td>ค่าส่ง</td><td>${fmt(ship)}</td></tr>`:''}<tr><td class="grand">สุทธิ</td><td class="grand">${fmt(grand)}</td></tr></tfoot></table>`;
+    const grand = subFullPrice - totalDiscount + ship;
+    
+    html+=`</tbody><tfoot><tr><td>รวม</td><td>${fmt(subFullPrice)}</td></tr>${totalDiscount>0?`<tr><td>ส่วนลด</td><td style="color:red;">-${fmt(totalDiscount)}</td></tr>`:''}${ship>0?`<tr><td>ค่าส่ง</td><td>${fmt(ship)}</td></tr>`:''}<tr><td class="grand">สุทธิ</td><td class="grand">${fmt(grand)}</td></tr></tfoot></table>`;
     return html;
 }
 
 // ============================================================
-// 🚀 ฟังก์ชันส่งบิล Flex Message (แก้บั๊ก undefined)
+// 🚀 ฟังก์ชันส่งบิล Flex Message 
 // ============================================================
 async function sendFlexBill() {
-    // 1. ดึงข้อมูลลูกค้า
     const customerId = $("#customerSelect").value;
     let customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
     if (!customerName || customerName.includes("เลือกรายชื่อ")) customerName = "คุณลูกค้า";
 
-    if (!customerId) {
-        Swal.fire('แจ้งเตือน', 'กรุณาเลือกหรือกรอกรายชื่อลูกค้าก่อนครับ', 'warning');
-        return;
-    }
+    if (!customerId) { Swal.fire('แจ้งเตือน', 'กรุณาเลือกหรือกรอกรายชื่อลูกค้าก่อนครับ', 'warning'); return; }
 
-    // 2. รวบรวมสินค้าจาก Input (รองรับทั้งชื่อตัวแปรเก่าและใหม่)
     let items = [];
+    let subFullPrice = 0;
+    let customDiscTotal = 0;
+
     document.querySelectorAll(".qty").forEach(e => {
         let q = parseInt(e.value) || 0;
         if (q > 0) {
-            // 🔥 แก้ตรงนี้: เช็คทั้ง dataset ใหม่ (a,s,t,p) และ dataset เก่า (animal, size, type, unit)
             const animalKey = e.dataset.a || e.dataset.animal;
             const sizeKey   = e.dataset.s || e.dataset.size;
             const typeKey   = e.dataset.t || e.dataset.type;
-            const priceKey  = e.dataset.p || e.dataset.unit || 0;
+            const priceKey  = parseFloat(e.dataset.p || e.dataset.unit || 0);
+            
+            const cp = document.querySelector(`input.custom-price[data-animal="${animalKey}"][data-size="${sizeKey}"]`);
+            const effectivePrice = (cp && cp.value !== "") ? parseFloat(cp.value) : priceKey;
+            const discPerItem = priceKey - effectivePrice;
+            
+            const lineGross = q * priceKey;
+            const lineDisc = q * discPerItem;
+            
+            subFullPrice += lineGross;
+            if (discPerItem > 0) customDiscTotal += lineDisc;
 
             items.push({
-                animal: animalLabel(animalKey),    // Mice / Rat
-                size: sizeKey,                     // Size
-                type: typeKey,                     // แช่ / เป็น
+                animal: animalLabel(animalKey),
+                size: sizeKey,
+                type: typeKey === 'fresh' ? 'แช่' : (typeKey === 'frozen' ? 'เป็น' : typeKey),
                 qty: q,
-                price: q * parseFloat(priceKey)    // ราคารวม
+                fullPrice: lineGross,
+                effectivePrice: effectivePrice,
+                discPerItem: discPerItem,
+                lineDisc: lineDisc
             });
         }
     });
 
-    if (items.length === 0) {
-        Swal.fire('เตือน', 'กรุณาเลือกสินค้าอย่างน้อย 1 รายการ', 'warning');
-        return;
-    }
+    if (items.length === 0) { Swal.fire('เตือน', 'กรุณาเลือกสินค้าอย่างน้อย 1 รายการ', 'warning'); return; }
 
-    // 3. เตรียมตัวเลขสรุป
     const ship = parseFloat($("#shipCost").value || 0);
     const shipMethod = $("#shipMethod").value;
-    const type = $('#promoType')?.value || 'none';
-    const raw = parseFloat($('#promoValue')?.value || '0') || 0;
-    
-    // คำนวณ Subtotal
-    let subTotal = 0;
-    items.forEach(i => subTotal += i.price);
-
-    // คำนวณส่วนลด
-    let discVal = 0;
-    if (type === 'baht') discVal = Math.max(0, Math.min(raw, subTotal));
-    else if (type === 'percent') discVal = Math.max(0, Math.min(100, raw)) * subTotal / 100;
-
-    const total = subTotal - discVal + ship;
+    const globalDiscount = getGlobalDiscount(subFullPrice - customDiscTotal);
+    const totalDiscount = customDiscTotal + globalDiscount;
+    const total = subFullPrice - totalDiscount + ship;
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 
-    // 4. 🎨 สร้างรายการสินค้า
-    let flexItems = items.map(i => ({
-        "type": "box",
-        "layout": "baseline",
-        "contents": [
-            { "type": "text", "text": i.animal, "size": "sm", "color": "#555555", "flex": 0 },
-            { "type": "text", "text": `${i.size} (${i.type})`, "margin": "sm", "size": "sm", "color": "#555555", "flex": 0 },
-            { "type": "text", "text": String(i.qty), "size": "sm", "margin": "md", "flex": 0, "color": "#111111" },
-            { "type": "text", "text": fmt(i.price), "size": "sm", "color": "#111111", "align": "end" }
-        ]
-    }));
+    // 🎨 สร้างรายการสินค้า (Flex Items)
+    let flexItems = [];
+    items.forEach(i => {
+        // บรรทัดสินค้าหลัก
+        flexItems.push({
+            "type": "box", "layout": "baseline",
+            "contents": [
+                { "type": "text", "text": i.animal, "size": "sm", "color": "#555555", "flex": 0 },
+                { "type": "text", "text": `${i.size} (${i.type})`, "margin": "sm", "size": "sm", "color": "#555555", "flex": 0 },
+                { "type": "text", "text": String(i.qty), "size": "sm", "margin": "md", "flex": 0, "color": "#111111" },
+                { "type": "text", "text": fmt(i.fullPrice), "size": "sm", "color": "#111111", "align": "end" }
+            ]
+        });
+        
+        // บรรทัดลดราคา (โชว์ถ้ามีการลดราคาต่อตัว)
+        if (i.discPerItem > 0) {
+            flexItems.push({
+                "type": "box", "layout": "baseline", "spacing": "sm",
+                "contents": [
+                    { "type": "text", "text": `   ↳ ลดเหลือ ${fmt(i.effectivePrice)}฿/ตัว`, "size": "xs", "color": "#06c755", "flex": 3 },
+                    { "type": "text", "text": `-${fmt(i.lineDisc)}`, "size": "xs", "color": "#06c755", "align": "end", "flex": 1 }
+                ]
+            });
+        }
+    });
 
-    // เพิ่มค่าส่ง
     if (ship > 0) {
         flexItems.push({
             "type": "box", "layout": "baseline",
@@ -409,140 +403,54 @@ async function sendFlexBill() {
         });
     }
 
-    // เพิ่มส่วนลด
-    if (discVal > 0) {
+    // โชว์ส่วนลดรวมบรรทัดเดียวเลย ถ้ามีการลดราคา
+    if (totalDiscount > 0) {
         flexItems.push({
             "type": "box", "layout": "baseline",
             "contents": [
-                { "type": "text", "text": "ส่วนลด", "size": "sm", "color": "#ff3333", "flex": 0 },
-                { "type": "text", "text": "-" + fmt(discVal), "size": "sm", "color": "#ff3333", "align": "end" }
+                { "type": "text", "text": "รวมส่วนลด", "size": "sm", "color": "#ff3333", "flex": 0 },
+                { "type": "text", "text": "-" + fmt(totalDiscount), "size": "sm", "color": "#ff3333", "align": "end" }
             ]
         });
     }
 
-    // 🔗 สร้างลิงก์ QR Code (PromptPay) ตามยอดเงินจริง
-    // หมายเหตุ: ต้องใส่ตัวแปร PROMPTPAY_ID ไว้ด้านบนสุดของไฟล์ script.js แล้วนะครับ
     const qrUrl = `https://promptpay.io/${PROMPTPAY_ID}/${total}`;
 
-    // 5. 🏗️ ประกอบร่าง JSON Flex Message (แบบมี QR Code)
+    // 🏗️ ประกอบร่าง JSON
     const flexMessage = {
         "type": "bubble",
-        "header": {
-            "type": "box",
-            "layout": "vertical",
-            "contents": [
-                {
-                    "type": "image",
-                    "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png",
-                    "margin": "md",
-                    "size": "sm"
-                }
-            ]
-        },
+        "header": { "type": "box", "layout": "vertical", "contents": [ { "type": "image", "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png", "margin": "md", "size": "sm" } ] },
         "body": {
-            "type": "box",
-            "layout": "vertical",
+            "type": "box", "layout": "vertical",
             "contents": [
                 { "type": "text", "text": "บิลแจ้งยอดชำระ", "weight": "bold", "size": "xl" },
-                {
-                    "type": "box",
-                    "layout": "vertical",
-                    "margin": "lg",
-                    "spacing": "sm",
-                    "contents": [
-                        {
-                            "type": "box",
-                            "layout": "baseline",
-                            "spacing": "sm",
-                            "contents": [
-                                { "type": "text", "text": "วันที่:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
-                                { "type": "text", "text": dateStr, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                            ]
-                        },
-                        {
-                            "type": "box",
-                            "layout": "baseline",
-                            "spacing": "sm",
-                            "contents": [
-                                { "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
-                                { "type": "text", "text": customerName, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 }
-                            ]
-                        }
-                    ]
-                },
+                { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
+                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "วันที่:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": dateStr, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 } ] },
+                    { "type": "box", "layout": "baseline", "spacing": "sm", "contents": [ { "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 1 }, { "type": "text", "text": customerName, "wrap": true, "color": "#666666", "size": "sm", "flex": 5 } ] }
+                ]},
                 { "type": "separator", "margin": "xxl" },
                 { "type": "box", "layout": "vertical", "margin": "xxl", "spacing": "sm", "contents": flexItems },
                 { "type": "separator", "margin": "xxl" },
-                {
-                    "type": "box",
-                    "layout": "horizontal",
-                    "margin": "md",
-                    "contents": [
-                        { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold" },
-                        { "type": "text", "text": fmt(total) + " ฿", "size": "xl", "color": "#111111", "align": "end", "weight": "bold" }
-                    ]
-                }
+                { "type": "box", "layout": "horizontal", "margin": "md", "contents": [ { "type": "text", "text": "ยอดรวมสุทธิ", "size": "md", "color": "#555555", "weight": "bold" }, { "type": "text", "text": fmt(total) + " ฿", "size": "xl", "color": "#111111", "align": "end", "weight": "bold" } ] }
             ]
         },
         "footer": {
-            "type": "box",
-            "layout": "vertical",
-            "spacing": "md",
+            "type": "box", "layout": "vertical", "spacing": "md",
             "contents": [
                 { "type": "text", "text": "สแกนเพื่อชำระเงิน (พร้อมเพย์)", "size": "xs", "align": "center", "color": "#aaaaaa" },
-                
-                // 👇 QR Code อยู่ตรงนี้
-                {
-                    "type": "image",
-                    "url": qrUrl,
-                    "size": "lg",
-                    "aspectMode": "cover",
-                    "margin": "md"
-                },
-                
-                {
-                    "type": "box",
-                    "layout": "vertical",
-                    "margin": "lg",
-                    "spacing": "xs",
-                    "contents": [
-                        { "type": "text", "text": "ธ.กรุงไทย", "size": "sm", "weight": "bold", "align": "center" },
-                        { "type": "text", "text": "983-1-84269-3", "size": "sm", "align": "center", "color": "#555555" },
-                        { "type": "text", "text": "ชื่อ: กฤตธนัท สมานเพ็ขร์", "size": "xs", "align": "center", "color": "#aaaaaa" }
-                    ]
-                }
-            ],
-            "paddingAll": "20px",
-            "backgroundColor": "#ffffff"
+                { "type": "image", "url": qrUrl, "size": "lg", "aspectMode": "cover", "margin": "md" },
+                { "type": "box", "layout": "vertical", "margin": "lg", "spacing": "xs", "contents": [ { "type": "text", "text": "ธ.กรุงไทย", "size": "sm", "weight": "bold", "align": "center" }, { "type": "text", "text": "983-1-84269-3", "size": "sm", "align": "center", "color": "#555555" }, { "type": "text", "text": "ชื่อ: กฤตธนัท สมานเพ็ขร์", "size": "xs", "align": "center", "color": "#aaaaaa" } ] }
+            ], "paddingAll": "20px", "backgroundColor": "#ffffff"
         }
     };
 
-    // 6. ส่งข้อมูล
     Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-
     try {
-        const response = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-                action: 'sendFlex',
-                userId: customerId,
-                flexMessage: flexMessage
-            }),
-            redirect: 'follow'
-        });
-
+        const response = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'sendFlex', userId: customerId, flexMessage: flexMessage }), redirect: 'follow' });
         const result = await response.json();
-
-        if (result.status === 'success') {
-            Swal.fire('สำเร็จ!', 'ส่งบิลเรียบร้อยแล้วครับ 🐭', 'success');
-        } else {
-            Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + result.message, 'error');
-        }
-    } catch (error) {
-        console.error('🔴 Error:', error);
-        Swal.fire('Error', 'ไม่สามารถส่งบิลได้: ' + error.message, 'error');
-    }
+        if (result.status === 'success') Swal.fire('สำเร็จ!', 'ส่งบิลเรียบร้อยแล้วครับ 🐭', 'success');
+        else Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + result.message, 'error');
+    } catch (error) { Swal.fire('Error', 'ไม่สามารถส่งบิลได้: ' + error.message, 'error'); }
 }
 
 // ---- Events ----
@@ -567,15 +475,8 @@ function wireEvents(){
   $("#billCopy").addEventListener('click',copyReceipt);
   document.querySelector('#billModal .modal-backdrop').addEventListener('click',closeReceipt);
 
-  // 🆕 ปุ่มโหลดข้อมูล (Manual)
   $("#loadSheetBtn").addEventListener('click', () => loadCustomersFromSheet(false));
-  
-  // 🆕 กด Enter ใน input ก็โหลดได้เลย
-  $("#sheetUrlInput").addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      loadCustomersFromSheet(false);
-    }
-  });
+  $("#sheetUrlInput").addEventListener('keypress', (e) => { if (e.key === 'Enter') loadCustomersFromSheet(false); });
   
   const lineBtn = document.getElementById('sendLineFlexBtn');
   if(lineBtn) lineBtn.addEventListener('click', sendFlexBill);
@@ -583,25 +484,14 @@ function wireEvents(){
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 เริ่มต้นระบบ...');
-  
   buildTable();
   wireEvents();
   
-  // 🔥 ตรวจสอบ localStorage และโหลดข้อมูลทันทีถ้ามีลิงก์เดิม
   const savedUrl = localStorage.getItem('sheetUrl');
   if (savedUrl) {
     $('#sheetUrlInput').value = savedUrl;
-    console.log('📌 พบลิงก์เดิม:', savedUrl);
-    // สั่งโหลดออโต้ทันที (ส่ง true ไปเพื่อให้ฟังก์ชันรู้ว่าเป็น Auto Load)
     loadCustomersFromSheet(true); 
   }
   
-  // Init LIFF
-  try {
-      await liff.init({ liffId: LIFF_ID });
-      console.log('✅ LIFF initialized');
-  } catch (err) { 
-      console.log('⚠️ LIFF error:', err); 
-  }
+  try { await liff.init({ liffId: LIFF_ID }); } catch (err) {}
 });

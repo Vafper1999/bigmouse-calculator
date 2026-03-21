@@ -83,17 +83,22 @@
         </div>
       </div>
 
-      <div class="row" style="background:#f9f9f9; padding:10px; border-radius:8px;">
-        <div class="col">
-          <label>ส่วนลด (ProM.)</label>
+<div class="row" style="background:#f9f9f9; padding:10px; border-radius:8px; flex-wrap: wrap;">
+        <div class="col" style="flex: 1 1 45%;">
+          <label id="lbl-prom-val">ส่วนลด (ProM.)</label>
           <input type="number" id="prom-val" placeholder="ระบุตัวเลข (ถ้ามี)">
         </div>
-        <div class="col">
+        <div class="col" style="flex: 1 1 45%;">
           <label>หน่วยส่วนลด</label>
           <select id="prom-type">
             <option value="baht">บาท (Baht)</option>
             <option value="percent">% เปอร์เซ็นต์</option>
+            <option value="perItem">ส่วนลดต่อตัว (฿/ตัว)</option>
           </select>
+        </div>
+        
+        <div id="disc-preview-box" style="display:none; width:100%; margin-top:10px; padding-top:8px; border-top:1px dashed #ccc; text-align:right; font-size:14px;">
+          รวมส่วนลดรายการนี้: <span id="disc-preview-total" style="color:#ef4444; font-weight:bold; font-size:16px;">0</span> บาท
         </div>
       </div>
 
