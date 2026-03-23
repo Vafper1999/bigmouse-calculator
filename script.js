@@ -461,7 +461,6 @@ function wireEvents(){
   $("#shipCost").addEventListener('input',recalc);
   $("#msgPrefix").addEventListener('input',recalc);
   $("#msgSuffix").addEventListener('input',recalc);
-  $("#msgSuffix2").addEventListener('input',recalc);
   $("#promoType").addEventListener('change',recalc);
   $("#promoValue").addEventListener('input',recalc);
   $("#copyBtn").addEventListener('click',async()=>{
