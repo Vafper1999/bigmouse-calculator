@@ -142,6 +142,42 @@
             </div>
             <p class="hint">บรรทัดค่าส่งจะแสดงเฉพาะเมื่อค่าส่ง &gt; 0</p>
           </div>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #ddd;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                <span style="font-size:20px;">🚚</span>
+                <h3 style="margin:0; color:#333; font-size:16px;">แจ้งสถานะจัดส่ง / เลขพัสดุ</h3>
+              </div>
+              
+              <div class="row" style="margin-bottom: 10px;">
+                <div style="flex:1 1 150px">
+                  <label>ขนส่งที่ใช้</label>
+                  <select id="trackTransport">
+                    <option value="Nim Express">Nim Express</option>
+                    <option value="Lalamove">Lalamove</option>
+                    <option value="Grab">Grab</option>
+                    <option value="Line Man">Line Man</option>
+                    <option value="other">อื่น ๆ</option>
+                  </select>
+                </div>
+                <div id="otherTransportWrap" style="flex:1 1 150px; display:none;">
+                  <label>ระบุชื่อขนส่ง</label>
+                  <input type="text" id="otherTransportName" placeholder="ระบุชื่อขนส่ง...">
+                </div>
+                <div style="flex:2 1 200px">
+                  <label>เลขพัสดุ / ทะเบียนรถ</label>
+                  <input type="text" id="trackNo" placeholder="เช่น NIM123456789">
+                </div>
+              </div>
+
+              <div class="row" style="margin-bottom: 15px;">
+                <div style="flex:1">
+                  <label>ลิงก์เช็คสถานะ (ถ้ามี)</label>
+                  <input type="text" id="trackUrl" placeholder="https://...">
+                </div>
+              </div>
+              <button class="btn" id="sendTrackingBtn" style="width:100%; background-color:#3b82f6;">📦 ส่งแจ้งเลขพัสดุเข้า LINE</button>
+            </div>
+
         </section>
       </div>
     </section>
@@ -164,6 +200,7 @@
       <section class="card placeholder-card">
         <h2>รายการสั่งซื้อประจำเดือน</h2>
         <p class="hint">หน้านี้จะใช้เก็บค่าใช้จ่าย/ออเดอร์สั่งของประจำเดือน</p>
+        
       </section>
     </section>
   </div>

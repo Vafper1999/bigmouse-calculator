@@ -30,7 +30,7 @@ const fmt = n => Number(n).toLocaleString("th-TH", {minimumFractionDigits:(n%1?2
 const getSelectedAnimals = () => Array.from(document.querySelectorAll('input[name="animal"]:checked')).map(i=>i.value);
 const animalLabel = key => key === 'mice' ? 'Mice' : 'Rat';
 let qtyInputs = [];
-let customPriceInputs = []; // 🌟 เก็บ input ราคาพิเศษ
+let customPriceInputs = []; 
 
 // 🌟 คำนวณส่วนลดท้ายบิล (สำหรับเปอร์เซ็นต์ หรือ ลดเหมา)
 function getGlobalDiscount(subNet){ 
@@ -117,7 +117,7 @@ function parseCSV(text) {
 }
 
 // ============================================================
-// 🌟 Build Table (เปลี่ยนเป็นช่องกรอกราคาขายจริง)
+// 🌟 Build Table 
 // ============================================================
 function buildTable(){
   const animals = getSelectedAnimals();
@@ -162,7 +162,7 @@ function buildTable(){
 }
 
 // ============================================================
-// 🌟 Recalc (คำนวณส่วนลดแบบราคาขายจริง)
+// 🌟 Recalc 
 // ============================================================
 function recalc(){
   const shipMethod = $("#shipMethod").value;
@@ -171,8 +171,8 @@ function recalc(){
   else { shipCostEl.disabled = false; }
   if (!$("#shipCost").value) $("#shipCost").value = 0;
 
-  let subFullPrice = 0; // ยอดรวมแบบไม่ลด
-  let customDiscTotal = 0; // ยอดรวมส่วนลดจากที่กรอกราคาพิเศษ
+  let subFullPrice = 0; 
+  let customDiscTotal = 0; 
 
   const animals = getSelectedAnimals();
   animals.forEach(a=>{
@@ -185,13 +185,12 @@ function recalc(){
       const qz = parseInt(z?.value||0,10)||0;
       const unit = parseFloat(f?.dataset.unit||z?.dataset.unit||0);
       
-      // 🌟 ใช้ราคาพิเศษ ถ้าระบุ, ถ้าไม่ระบุใช้ราคาปกติ
       const effectivePrice = (cp && cp.value !== "") ? parseFloat(cp.value) : unit;
       const discPerItem = unit - effectivePrice; 
       
       const totalQty = qf + qz;
-      subFullPrice += totalQty * unit; // บวกยอดเต็ม
-      if (discPerItem > 0) customDiscTotal += totalQty * discPerItem; // บวกยอดที่ลดให้
+      subFullPrice += totalQty * unit; 
+      if (discPerItem > 0) customDiscTotal += totalQty * discPerItem; 
 
       const lineNet = totalQty * effectivePrice;
       const cell=document.querySelector(`.line[data-animal="${a}"][data-size="${size}"]`);
@@ -200,8 +199,8 @@ function recalc(){
   });
 
   const subNetAfterCustom = subFullPrice - customDiscTotal;
-  const globalDiscount = getGlobalDiscount(subNetAfterCustom); // คำนวณโปรท้ายบิล
-  const totalDiscount = customDiscTotal + globalDiscount; // ส่วนลดรวมทั้งหมด
+  const globalDiscount = getGlobalDiscount(subNetAfterCustom); 
+  const totalDiscount = customDiscTotal + globalDiscount; 
   
   const ship = parseFloat($("#shipCost").value||0);
   const grand = subFullPrice - totalDiscount + ship;
@@ -240,13 +239,11 @@ function buildMessage(subFullPrice, ship, totalDiscount, customDiscTotal, global
       const effectivePrice = (cp && cp.value !== "") ? parseFloat(cp.value) : unit;
       const discPerItem = unit - effectivePrice;
 
-      // แจกแจงแช่
       if(qf) {
         let txt = `[${animalLabel(a)}] ${size} (แช่) ${qf} ตัว ราคา ${fmt(qf*unit)} บาท`;
         if (discPerItem > 0) txt += `\n   ↳ (ราคาพิเศษ ${fmt(effectivePrice)}บ./ตัว ประหยัดไป ${fmt(qf*discPerItem)}บ.)`;
         body.push(txt);
       }
-      // แจกแจงเป็น
       if(qz) {
         let txt = `[${animalLabel(a)}] ${size} (เป็น) ${qz} ตัว ราคา ${fmt(qz*unit)} บาท`;
         if (discPerItem > 0) txt += `\n   ↳ (ราคาพิเศษ ${fmt(effectivePrice)}บ./ตัว ประหยัดไป ${fmt(qz*discPerItem)}บ.)`;
@@ -366,10 +363,8 @@ async function sendFlexBill() {
     const total = subFullPrice - totalDiscount + ship;
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 
-    // 🎨 สร้างรายการสินค้า (Flex Items)
     let flexItems = [];
     items.forEach(i => {
-        // บรรทัดสินค้าหลัก
         flexItems.push({
             "type": "box", "layout": "baseline",
             "contents": [
@@ -380,7 +375,6 @@ async function sendFlexBill() {
             ]
         });
         
-        // บรรทัดลดราคา (โชว์ถ้ามีการลดราคาต่อตัว)
         if (i.discPerItem > 0) {
             flexItems.push({
                 "type": "box", "layout": "baseline", "spacing": "sm",
@@ -403,7 +397,6 @@ async function sendFlexBill() {
         });
     }
 
-    // โชว์ส่วนลดรวมบรรทัดเดียวเลย ถ้ามีการลดราคา
     if (totalDiscount > 0) {
         flexItems.push({
             "type": "box", "layout": "baseline",
@@ -416,7 +409,6 @@ async function sendFlexBill() {
 
     const qrUrl = `https://promptpay.io/${PROMPTPAY_ID}/${total}`;
 
-    // 🏗️ ประกอบร่าง JSON
     const flexMessage = {
         "type": "bubble",
         "header": { "type": "box", "layout": "vertical", "contents": [ { "type": "image", "url": "https://image2url.com/r2/default/images/1769504171528-44fb59f7-c558-4d57-bb8e-820f68ccd885.png", "margin": "md", "size": "sm" } ] },
@@ -446,11 +438,139 @@ async function sendFlexBill() {
 
     Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
     try {
-        const response = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'sendFlex', userId: customerId, flexMessage: flexMessage }), redirect: 'follow' });
+        const response = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+          body: JSON.stringify({ 
+            action: 'sendFlex', 
+            userId: customerId, 
+            flexMessage: flexMessage,
+            altText: "💰 บิลแจ้งยอดชำระจาก Big Mouse" }), 
+            redirect: 'follow' });
         const result = await response.json();
         if (result.status === 'success') Swal.fire('สำเร็จ!', 'ส่งบิลเรียบร้อยแล้วครับ 🐭', 'success');
         else Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + result.message, 'error');
     } catch (error) { Swal.fire('Error', 'ไม่สามารถส่งบิลได้: ' + error.message, 'error'); }
+}
+
+// ============================================================
+// 🚚 ฟังก์ชันส่งแจ้งเลขพัสดุ (Tracking Flex Message)
+// ============================================================
+async function sendTrackingFlex() {
+    const customerId = document.getElementById("customerSelect").value;
+    let customerName = document.getElementById("customerSelect").options[document.getElementById("customerSelect").selectedIndex]?.text;
+    
+    if (!customerId || customerName.includes("เลือกรายชื่อ")) {
+        Swal.fire('แจ้งเตือน', 'กรุณาโหลดและเลือกรายชื่อลูกค้าด้านบนก่อนครับ', 'warning');
+        return;
+    }
+
+    const transportSelect = document.getElementById("trackTransport").value;
+    const otherNameElement = document.getElementById("otherTransportName");
+    const otherName = otherNameElement ? otherNameElement.value.trim() : "";
+    const transport = (transportSelect === 'other') ? (otherName || "ไม่ระบุ") : transportSelect;
+
+    const trackNo = document.getElementById("trackNo").value.trim() || "-";
+    const trackUrl = document.getElementById("trackUrl").value.trim();
+    const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    if (!document.getElementById("trackNo").value.trim()) {
+        const confirm = await Swal.fire({
+            title: 'ยังไม่ได้ใส่เลขพัสดุ', text: 'ต้องการส่งโดยไม่ระบุเลขพัสดุใช่หรือไม่?', icon: 'question', showCancelButton: true
+        });
+        if (!confirm.isConfirmed) return;
+    }
+
+    let footerContents = [];
+    if (trackUrl && trackUrl.startsWith('http')) {
+        footerContents.push({
+            "type": "button",
+            "style": "primary",
+            "color": "#222423",
+            "action": { "type": "uri", "label": "เช็คสถานะพัสดุ", "uri": trackUrl }
+        });
+    }
+
+    const flexMessage = {
+        "type": "bubble",
+        "size": "mega",
+        "header": {
+            "type": "box", "layout": "vertical", "backgroundColor": "#222423",
+            "paddingTop": "19px", "paddingAll": "12px", "paddingBottom": "16px",
+            "contents": [
+                { "type": "text", "text": "🚚 จัดส่งสินค้าเรียบร้อย", "weight": "bold", "color": "#ffffff", "size": "xl" }
+            ]
+        },
+        "body": {
+            "type": "box", "layout": "vertical", "spacing": "md",
+            "contents": [
+                {
+                    "type": "box", "layout": "baseline", "spacing": "sm",
+                    "contents": [
+                        { "type": "text", "text": "ลูกค้า:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                        { "type": "text", "text": customerName, "wrap": true, "color": "#444444", "size": "sm", "flex": 5, "weight": "bold" }
+                    ]
+                },
+                {
+                    "type": "box", "layout": "baseline", "spacing": "sm",
+                    "contents": [
+                        { "type": "text", "text": "ขนส่ง:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                        { "type": "text", "text": transport, "wrap": true, "color": "#444444", "size": "sm", "flex": 5 }
+                    ]
+                },
+                {
+                    "type": "box", "layout": "baseline", "spacing": "sm",
+                    "contents": [
+                        { "type": "text", "text": "เลขพัสดุ:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                        { "type": "text", "text": trackNo, "wrap": true, "color": "#06c755", "size": "md", "flex": 5, "weight": "bold" }
+                    ]
+                },
+                {
+                    "type": "box", "layout": "baseline", "spacing": "sm",
+                    "contents": [
+                        { "type": "text", "text": "วันที่ส่ง:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
+                        { "type": "text", "text": dateStr, "wrap": true, "color": "#444444", "size": "sm", "flex": 5 }
+                    ]
+                },
+                { "type": "separator", "margin": "lg" },
+                { "type": "text", "text": "ขอบพระคุณที่อุดหนุน Big Mouse ครับ 🐭", "size": "xs", "color": "#aaaaaa", "wrap": true, "margin": "lg", "align": "center" }
+            ]
+        }
+    };
+
+    if (footerContents.length > 0) {
+        flexMessage.footer = { "type": "box", "layout": "vertical", "contents": footerContents };
+    }
+
+    Swal.fire({ title: 'กำลังส่งแจ้งเลขพัสดุ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+    try {
+        const response = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ 
+              action: 'sendFlex', 
+              userId: customerId, 
+              flexMessage: flexMessage,
+              altText: "🚚 อัปเดตสถานะการจัดส่งพัสดุ" }),
+            redirect: 'follow'
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            Swal.fire('สำเร็จ!', 'ยิงเลขพัสดุให้ลูกค้าเรียบร้อยครับ 🚚', 'success');
+            
+            document.getElementById("trackNo").value = "";
+            document.getElementById("trackUrl").value = "";
+            if (document.getElementById("otherTransportName")) document.getElementById("otherTransportName").value = "";
+            if (document.getElementById("otherTransportWrap")) document.getElementById("otherTransportWrap").style.display = "none";
+            document.getElementById("trackTransport").value = "Nim Express"; 
+
+        } else {
+            Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + result.message, 'error');
+        }
+    } catch (error) {
+        Swal.fire('Error', 'ไม่สามารถส่งได้: ' + error.message, 'error');
+    }
 }
 
 // ---- Events ----
@@ -479,6 +599,25 @@ function wireEvents(){
   
   const lineBtn = document.getElementById('sendLineFlexBtn');
   if(lineBtn) lineBtn.addEventListener('click', sendFlexBill);
+
+  // 🌟 ผูกปุ่มส่งเลขพัสดุ
+  const trackBtn = document.getElementById('sendTrackingBtn');
+  if(trackBtn) trackBtn.addEventListener('click', sendTrackingFlex);
+
+  // 🌟 ดักการแสดงผลช่องกรอกอื่นๆ
+  const transportSelect = document.getElementById('trackTransport');
+  if (transportSelect) {
+      transportSelect.addEventListener('change', function() {
+          const otherWrap = document.getElementById('otherTransportWrap');
+          if (this.value === 'other') {
+              otherWrap.style.display = 'block';
+              document.getElementById('otherTransportName').focus();
+          } else {
+              otherWrap.style.display = 'none';
+              document.getElementById('otherTransportName').value = '';
+          }
+      });
+  }
 }
 
 // ---- Init ----
