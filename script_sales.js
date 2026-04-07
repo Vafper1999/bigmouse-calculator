@@ -72,7 +72,7 @@ function closeSettings() { $('settings-modal').style.display = 'none'; }
 async function saveSettings() {
   const salesUrl = $('sheet-url-input').value; 
   const walletUrl = $('wallet-url-input') ? $('wallet-url-input').value : ""; 
-  if (!salesUrl) return alert('กรุณาวางลิงก์ Google Sheet สำหรับบันทึกยอดขาย');
+  if (!salesUrl) return Swal.fire('แจ้งเตือน', 'กรุณาวางลิงก์ Google Sheet สำหรับบันทึกยอดขาย', 'warning');
   
   const btn = event.target;
   const oldTxt = btn.innerText;
@@ -82,9 +82,9 @@ async function saveSettings() {
   try {
     const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'setSheetUrl', url: salesUrl, walletUrl: walletUrl }) });
     const result = await res.json();
-    if (result.status === 'success') { alert('✅ ' + result.message); closeSettings(); } 
+    if (result.status === 'success') { Swal.fire('สำเร็จ', result.message, 'success'); closeSettings(); } 
     else throw new Error(result.message);
-  } catch (err) { alert('❌ Error: ' + err.message); } 
+  } catch (err) { Swal.fire('Error', err.message, 'error'); } 
   finally { btn.innerText = oldTxt; btn.disabled = false; }
 }
 
@@ -122,7 +122,7 @@ function addToCart() {
   let promVal = parseFloat($('prom-val').value) || 0;
   const promType = $('prom-type').value;
 
-  if (!price || !qty || qty <= 0) { alert('กรุณาระบุราคาและจำนวน'); return; }
+  if (!price || !qty || qty <= 0) { Swal.fire('แจ้งเตือน', 'กรุณาระบุราคาและจำนวน', 'warning'); return; }
 
   let discountBaht = 0;
   let totalRaw = price * qty;
@@ -188,15 +188,15 @@ function renderCart() {
 function remItem(index) { cart.splice(index, 1); renderCart(); }
 
 async function submitSaleOrder() {
-  if (cart.length === 0) return alert('ตะกร้าว่างเปล่า');
+  if (cart.length === 0) return Swal.fire('แจ้งเตือน', 'ตะกร้าว่างเปล่า', 'warning');
   const date = $('sale-date').value;
   const no   = $('sale-no').value;
-  if (!date) return alert('กรุณาเลือกวันที่');
+  if (!date) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกวันที่', 'warning');
 
   const btn = $('btn-save');
   const oldTxt = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '⏳...';
+  btn.textContent = '⏳ กำลังบันทึก...';
 
   try {
     const payload = {
@@ -206,9 +206,11 @@ async function submitSaleOrder() {
 
     const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
     const result = await res.json();
-    if (result.status === 'success') { alert('✅ บันทึกสำเร็จ!'); cart = []; renderCart(); $('sale-no').value = ''; loadSalesHistory(); } 
-    else throw new Error(result.message);
-  } catch (err) { alert('❌ Error: ' + err.message); } 
+    if (result.status === 'success') { 
+        Swal.fire({ icon: 'success', title: '✅ บันทึกยอดขายสำเร็จ!', timer: 2000, showConfirmButton: false });
+        cart = []; renderCart(); $('sale-no').value = ''; loadSalesHistory(); 
+    } else throw new Error(result.message);
+  } catch (err) { Swal.fire('Error', err.message, 'error'); } 
   finally { btn.disabled = false; btn.textContent = oldTxt; }
 }
 
@@ -220,7 +222,7 @@ async function loadSalesHistory() {
   const monthSelect = $('history-month-filter');
   const selectedMonth = monthSelect ? monthSelect.value : "";
   const tbody = $('history-body');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ... ⏳</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ... ⏳</td></tr>';
 
   try {
     const response = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getSalesHistory', month: selectedMonth === 'current' ? '' : selectedMonth }) });
@@ -236,16 +238,20 @@ async function loadSalesHistory() {
       }
       renderHistoryTable(data.records);
     }
-  } catch (error) { if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาด</td></tr>'; }
+  } catch (error) { if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาด</td></tr>'; }
 }
 
 function renderHistoryTable(records) {
   const tbody = $('history-body'); const summary = $('history-summary');
   if (!tbody) return; tbody.innerHTML = '';
+  
+  const monthSelect = $('history-month-filter');
+  const currentMonthVal = monthSelect ? monthSelect.value : "";
+
   let sumPrice = 0; let sumShipProfit = 0;
 
   if (!records || records.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูล</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูล</td></tr>';
     if (summary) summary.style.display = 'none'; return;
   }
 
@@ -257,6 +263,7 @@ function renderHistoryTable(records) {
 
     const typeLabel = (item.type === 'เป็น' || item.type === 'Live') ? '<span style="color:green; font-weight:bold;">[เป็น]</span>' : '<span style="color:blue; font-weight:bold;">[แช่]</span>';
 
+    // 🌟 เพิ่มปุ่มแก้ไขค่าส่ง และปุ่มลบ
     tr.innerHTML = `
       <td style="padding:10px 8px;">${item.date}</td>
       <td style="padding:10px 8px;">${item.animal} ${item.size}</td>
@@ -264,7 +271,13 @@ function renderHistoryTable(records) {
       <td style="padding:10px 8px;">${item.qty}</td>
       <td style="padding:10px 8px; font-weight:bold;">${price.toLocaleString()}</td>
       <td style="padding:10px 8px; color:gray;">${shipCharge.toLocaleString()}</td>
-      <td style="padding:10px 8px; color:gray;">${shipActual.toLocaleString()}</td>
+      <td style="padding:10px 8px; color:#ef4444; font-weight:bold;">
+         ${shipActual.toLocaleString()}
+         <span style="cursor:pointer; margin-left:8px; font-size:16px;" onclick="editShipping(${item.row}, '${currentMonthVal}', ${shipActual})" title="แก้ไขค่าส่ง">✏️</span>
+      </td>
+      <td style="padding:10px 8px; text-align:center;">
+         <span style="cursor:pointer; font-size:18px; color:gray;" onclick="deleteSale(${item.row}, '${currentMonthVal}')" title="ลบรายการนี้">🗑️</span>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -273,6 +286,59 @@ function renderHistoryTable(records) {
     summary.style.display = 'block';
     if ($('sum-monthly-price')) $('sum-monthly-price').textContent = sumPrice.toLocaleString();
     if ($('sum-monthly-ship')) $('sum-monthly-ship').textContent = sumShipProfit.toLocaleString();
+  }
+}
+
+// ============================================================
+// 🌟 2 ฟังก์ชันใหม่: แก้ไข และ ลบรายการ 
+// ============================================================
+async function editShipping(row, month, currentVal) {
+  if (!month || month === 'current') {
+      const dateObj = new Date(); month = dateObj.getFullYear() + '-' + ("0" + (dateObj.getMonth() + 1)).slice(-2);
+  }
+  
+  const { value: newAmt } = await Swal.fire({
+    title: 'แก้ไขค่าส่ง (จ่ายจริง)',
+    input: 'number',
+    inputValue: currentVal,
+    showCancelButton: true,
+    confirmButtonText: 'บันทึก',
+    cancelButtonText: 'ยกเลิก'
+  });
+
+  if (newAmt !== undefined && newAmt !== null && newAmt !== String(currentVal)) {
+    Swal.fire({ title: 'กำลังอัปเดต...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateShipActual', row: row, month: month, newActual: parseFloat(newAmt) || 0 }) });
+      const result = await res.json();
+      if (result.status === 'success') { Swal.fire('สำเร็จ', result.message, 'success'); loadSalesHistory(); } 
+      else throw new Error(result.message);
+    } catch(err) { Swal.fire('Error', err.message, 'error'); }
+  }
+}
+
+async function deleteSale(row, month) {
+  if (!month || month === 'current') {
+      const dateObj = new Date(); month = dateObj.getFullYear() + '-' + ("0" + (dateObj.getMonth() + 1)).slice(-2);
+  }
+
+  const confirm = await Swal.fire({
+    title: 'ยืนยันการลบ?',
+    text: "ลบแล้วยอดเงินจะถูกหักออกจากกระเป๋ากลับอัตโนมัติ",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: 'ใช่, ลบเลย!'
+  });
+
+  if (confirm.isConfirmed) {
+    Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteSaleItem', row: row, month: month }) });
+      const result = await res.json();
+      if (result.status === 'success') { Swal.fire('ลบสำเร็จ', result.message, 'success'); loadSalesHistory(); } 
+      else throw new Error(result.message);
+    } catch(err) { Swal.fire('Error', err.message, 'error'); }
   }
 }
 

@@ -33,7 +33,7 @@ async function loadDashboard() {
 
   $('dash-sales').innerText = '...';
   $('dash-expenses').innerText = '...';
-  $('order-table').querySelector('tbody').innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">กำลังโหลด...</td></tr>';
+  $('order-table').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">กำลังโหลด...</td></tr>';
 
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -63,7 +63,7 @@ async function loadDashboard() {
       const tbody = $('order-table').querySelector('tbody');
       tbody.innerHTML = '';
       if (result.orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:gray;">ไม่มีรายการ</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:gray;">ไม่มีรายการ</td></tr>';
       } else {
         result.orders.forEach(o => {
           let d = new Date(o.date);
@@ -71,6 +71,11 @@ async function loadDashboard() {
           let dStr = d.getDate() + '/' + (d.getMonth()+1);
           
           let tr = document.createElement('tr');
+          
+          // 🌟 ดึงเดือน/ปี ปัจจุบัน เพื่อส่งไปให้หลังบ้านรู้ว่าลบหน้าไหน
+          const monthParam = date.split('-')[0] + '-' + date.split('-')[1];
+
+          // 🌟 ใส่ปุ่มลบต่อท้ายรายการ
           tr.innerHTML = `
             <td>${dStr}</td>
             <td>
@@ -78,6 +83,9 @@ async function loadDashboard() {
               <div style="font-size:11px; color:#6b7280;">${o.supplier || '-'}</div>
             </td>
             <td style="text-align:right; font-weight:bold;">${parseFloat(o.total).toLocaleString()}</td>
+            <td style="text-align:center;">
+                <span style="cursor:pointer; font-size:18px; color:gray;" onclick="deleteOrder(${o.row}, '${monthParam}')" title="ลบรายการนี้">🗑️</span>
+            </td>
           `;
           tbody.appendChild(tr);
         });
@@ -95,14 +103,18 @@ async function submitOrder() {
   const shipping = parseFloat($('order-shipping').value) || 0;
   const discount = parseFloat($('order-discount').value) || 0;
   const note = $('order-note').value;
-  const payType = $('order-pay-type') ? $('order-pay-type').value : ""; // 🌟 ดึงค่าช่องทางชำระ
+  const payType = $('order-pay-type') ? $('order-pay-type').value : "";
 
-  if (!date || !item || !price || !qty) return alert('กรุณากรอกข้อมูลให้ครบ');
+  if (!date || !item || !price || !qty) {
+      if (typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
+      else alert('กรุณากรอกข้อมูลให้ครบ');
+      return;
+  }
 
   const btn = $('btn-save');
   const oldTxt = btn.innerText;
   btn.disabled = true;
-  btn.innerText = '⏳...';
+  btn.innerText = '⏳ กำลังบันทึก...';
 
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -110,24 +122,75 @@ async function submitOrder() {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ 
         action: 'saveOrder', 
-        date, item, supplier, price, qty, shipping, discount, note, payType // ส่ง payType ไปด้วย
+        date, item, supplier, price, qty, shipping, discount, note, payType 
       })
     });
 
     const result = await res.json();
     if (result.status === 'success') {
-      alert('✅ บันทึกสำเร็จ!');
+      if (typeof Swal !== 'undefined') Swal.fire({ icon: 'success', title: '✅ บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false });
+      else alert('✅ บันทึกสำเร็จ!');
+      
       $('order-item').value = ''; $('order-price').value = ''; 
       $('order-qty').value = '1'; $('order-shipping').value = ''; 
       $('order-discount').value = ''; 
       $('order-note').value = ''; calculateTotal();
       loadDashboard(); 
     } else {
-      alert('Error: ' + result.message);
+      if (typeof Swal !== 'undefined') Swal.fire('Error', result.message, 'error');
+      else alert('Error: ' + result.message);
     }
-  } catch (err) { alert('Error: ' + err.message); } 
+  } catch (err) { 
+      if (typeof Swal !== 'undefined') Swal.fire('Error', err.message, 'error');
+      else alert('Error: ' + err.message); 
+  } 
   finally { btn.disabled = false; btn.innerText = oldTxt; }
 }
+
+// ============================================================
+// 🌟 ฟังก์ชันใหม่: ลบรายการ (พร้อมคืนเงินเข้ากระเป๋าอัตโนมัติ)
+// ============================================================
+async function deleteOrder(row, monthParam) {
+    if (typeof Swal === 'undefined') {
+        if(!confirm("ยืนยันการลบรายการ? ยอดเงินจะถูกดึงกลับเข้ากระเป๋าอัตโนมัติ")) return;
+        executeDelete(row, monthParam);
+    } else {
+        const confirm = await Swal.fire({
+            title: 'ยืนยันการลบ?',
+            text: "ยอดเงินของรายการนี้ จะถูกดึงกลับเข้ากระเป๋าให้อัตโนมัติ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'ใช่, ลบเลย!'
+        });
+        if (confirm.isConfirmed) {
+            Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            executeDelete(row, monthParam);
+        }
+    }
+}
+
+async function executeDelete(row, monthParam) {
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteOrder', row: row, month: monthParam })
+        });
+        const result = await res.json();
+        
+        if (result.status === 'success') {
+            if (typeof Swal !== 'undefined') Swal.fire('สำเร็จ!', result.message, 'success');
+            else alert('สำเร็จ: ' + result.message);
+            loadDashboard(); // 🌟 รีโหลดเพื่อให้ยอดเงินเด้งกลับทันที
+        } else {
+            throw new Error(result.message);
+        }
+    } catch(err) {
+        if (typeof Swal !== 'undefined') Swal.fire('Error', err.message, 'error');
+        else alert('Error: ' + err.message);
+    }
+}
+
 
 // ==========================================
 // 🌟 ฟังก์ชันจัดการปุ่ม "โยกเงิน" (Transfers)
@@ -147,11 +210,15 @@ async function submitTransfer() {
   const amount = parseFloat($('transfer-amount').value);
   const note = $('transfer-note').value;
 
-  if (!date || !amount) return alert('กรุณากรอกวันที่และจำนวนเงินให้ครบถ้วน');
+  if (!date || !amount) {
+      if (typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', 'กรุณากรอกวันที่และจำนวนเงินให้ครบถ้วน', 'warning');
+      else alert('กรุณากรอกวันที่และจำนวนเงินให้ครบถ้วน');
+      return;
+  }
 
   const btn = event.target;
   const oldTxt = btn.innerText;
-  btn.disabled = true; btn.innerText = '⏳...';
+  btn.disabled = true; btn.innerText = '⏳กำลังบันทึก...';
 
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -161,12 +228,17 @@ async function submitTransfer() {
     });
     const result = await res.json();
     if (result.status === 'success') {
-      alert('✅ บันทึกประวัติโยกเงินสำเร็จ!');
+      if (typeof Swal !== 'undefined') Swal.fire({ icon: 'success', title: '✅ โยกเงินสำเร็จ!', timer: 1500, showConfirmButton: false });
+      else alert('✅ บันทึกประวัติโยกเงินสำเร็จ!');
+      
       $('transfer-amount').value = ''; $('transfer-note').value = '';
       closeTransferModal();
       loadDashboard(); // รีเฟรชยอดเงินให้ด้วย
-    } else alert('Error: ' + result.message);
-  } catch(e) { alert('Error: ' + e); }
+    } else throw new Error(result.message);
+  } catch(e) { 
+      if (typeof Swal !== 'undefined') Swal.fire('Error', e.message, 'error');
+      else alert('Error: ' + e); 
+  }
   finally { btn.disabled = false; btn.innerText = oldTxt; }
 }
 
@@ -183,8 +255,15 @@ async function saveSettings() {
       body: JSON.stringify({ action: 'setSheetUrl', url: url })
     });
     const r = await res.json();
-    if(r.status==='success') { alert('Update Sheet เรียบร้อย'); closeSettings(); loadDashboard(); }
-  } catch(e){ alert(e); }
+    if(r.status==='success') { 
+        if (typeof Swal !== 'undefined') Swal.fire('สำเร็จ', 'Update Sheet เรียบร้อย', 'success');
+        else alert('Update Sheet เรียบร้อย');
+        closeSettings(); loadDashboard(); 
+    }
+  } catch(e){ 
+      if (typeof Swal !== 'undefined') Swal.fire('Error', e.message, 'error');
+      else alert(e); 
+  }
   btn.innerText='บันทึก';
 }
 
