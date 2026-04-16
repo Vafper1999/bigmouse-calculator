@@ -43,7 +43,7 @@ function getGlobalDiscount(subNet){
 }
 
 // ============================================================
-// 🆕 ฟังก์ชัน Google Sheet Customers 
+// 🆕 ฟังก์ชัน Google Sheet Customers (ดึงเกรดจากคอลัมน์ E)
 // ============================================================
 function getSheetIdFromUrl(url) {
   const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
@@ -71,10 +71,35 @@ async function loadCustomersFromSheet(isAutoLoad = false) {
     customersData = [];
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][0] && rows[i][0].trim() !== '') {
-        customersData.push({ id: rows[i][0].trim(), name: rows[i][1] ? rows[i][1].trim() : 'ไม่ระบุชื่อ' });
+        let id = rows[i][0].trim();
+        let name = rows[i][1] ? rows[i][1].trim() : 'ไม่ระบุชื่อ';
+        
+        // 🌟 ดึงเกรดลูกค้าจากคอลัมน์ E (Index ที่ 4 ใน Array)
+        let grade = rows[i][4] ? rows[i][4].trim() : ''; 
+        
+        let weight = 4; // ค่าเริ่มต้นให้อยู่ล่างสุด
+        let prefix = '';
+        
+        if (grade === 'VIP' || grade === 'vip' || grade === 'แดง') { 
+            weight = 1; prefix = '🔴 '; 
+        } else if (grade === 'ประจำ' || grade === 'น้ำเงิน') { 
+            weight = 2; prefix = '🔵 '; 
+        } else if (grade === 'ขาจร' || grade === 'เหลือง') { 
+            weight = 3; prefix = '🟡 '; 
+        }else if (grade === 'Admin' || grade === 'ไฟ') { 
+            weight = 4; prefix = '🔥 ';
+        }
+        
+        customersData.push({ id: id, name: name, weight: weight, prefix: prefix });
       }
     }
     
+    // เรียงลำดับตามสี และชื่อ
+    customersData.sort((a, b) => {
+        if (a.weight !== b.weight) return a.weight - b.weight;
+        return a.name.localeCompare(b.name, 'th');
+    });
+
     select.innerHTML = '<option value="" selected disabled>-- เลือกรายชื่อลูกค้า --</option>';
     if (customersData.length === 0) {
       select.innerHTML = '<option value="" selected>ไม่พบข้อมูลลูกค้า</option>';
@@ -84,7 +109,10 @@ async function loadCustomersFromSheet(isAutoLoad = false) {
     
     customersData.forEach(c => {
       const option = document.createElement('option');
-      option.value = c.id; option.textContent = c.name; select.appendChild(option);
+      option.value = c.id; 
+      option.setAttribute('data-clean-name', c.name); // ซ่อนชื่อที่ไม่มีดาวไว้ใช้งาน
+      option.textContent = c.prefix + c.name; // แสดงดาวบนหน้าเว็บ
+      select.appendChild(option);
     });
     localStorage.setItem('sheetUrl', sheetUrl);
     
@@ -313,9 +341,14 @@ function buildReceiptHTML(){
 // 🚀 ฟังก์ชันส่งบิล Flex Message 
 // ============================================================
 async function sendFlexBill() {
-    const customerId = $("#customerSelect").value;
-    let customerName = $("#customerSelect").options[$("#customerSelect").selectedIndex]?.text;
-    if (!customerName || customerName.includes("เลือกรายชื่อ")) customerName = "คุณลูกค้า";
+    const selectEl = document.getElementById("customerSelect");
+    const customerId = selectEl.value;
+    let customerName = "คุณลูกค้า";
+    if (selectEl.selectedIndex >= 0) {
+        const opt = selectEl.options[selectEl.selectedIndex];
+        customerName = opt.getAttribute("data-clean-name") || opt.text;
+    }
+    if (customerName.includes("เลือกรายชื่อ")) customerName = "คุณลูกค้า";
 
     if (!customerId) { Swal.fire('แจ้งเตือน', 'กรุณาเลือกหรือกรอกรายชื่อลูกค้าก่อนครับ', 'warning'); return; }
 
@@ -438,13 +471,16 @@ async function sendFlexBill() {
 
     Swal.fire({ title: 'กำลังส่งบิล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
     try {
-        const response = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-          body: JSON.stringify({ 
-            action: 'sendFlex', 
-            userId: customerId, 
-            flexMessage: flexMessage,
-            altText: "💰 บิลแจ้งยอดชำระจาก Big Mouse" }), 
-            redirect: 'follow' });
+        const response = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ 
+              action: 'sendFlex', 
+              userId: customerId, 
+              flexMessage: flexMessage,
+              altText: "💰 บิลแจ้งยอดชำระจาก Big Mouse" }),
+            redirect: 'follow'
+        });
         const result = await response.json();
         if (result.status === 'success') Swal.fire('สำเร็จ!', 'ส่งบิลเรียบร้อยแล้วครับ 🐭', 'success');
         else Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + result.message, 'error');
@@ -455,8 +491,13 @@ async function sendFlexBill() {
 // 🚚 ฟังก์ชันส่งแจ้งเลขพัสดุ (Tracking Flex Message)
 // ============================================================
 async function sendTrackingFlex() {
-    const customerId = document.getElementById("customerSelect").value;
-    let customerName = document.getElementById("customerSelect").options[document.getElementById("customerSelect").selectedIndex]?.text;
+    const selectEl = document.getElementById("customerSelect");
+    const customerId = selectEl.value;
+    let customerName = "คุณลูกค้า";
+    if (selectEl.selectedIndex >= 0) {
+        const opt = selectEl.options[selectEl.selectedIndex];
+        customerName = opt.getAttribute("data-clean-name") || opt.text;
+    }
     
     if (!customerId || customerName.includes("เลือกรายชื่อ")) {
         Swal.fire('แจ้งเตือน', 'กรุณาโหลดและเลือกรายชื่อลูกค้าด้านบนก่อนครับ', 'warning');
