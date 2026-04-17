@@ -7,22 +7,21 @@
   <link rel="stylesheet" href="style_stock.css" />
   <link rel="stylesheet" href="style_sales.css" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon D1.ico">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+<header class="top-nav">
+  <div class="nav-title">🐭 Big Mouse • Sales</div>
+  
+  <button class="settings-btn" onclick="openSettings()">⚙️</button>
+  
+  <nav class="nav-tabs">
+    <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
+    <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
+    <span class="nav-tab active">Sales</span>
+    <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
+  </nav>
+</header>
 <body>
   <div class="wrap">
-    <header class="top-nav">
-      <div class="nav-title">🐭 Big Mouse • Sales</div>
-      
-      <button class="settings-btn" onclick="openSettings()">⚙️</button>
-      
-      <nav class="nav-tabs">
-        <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
-        <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
-        <span class="nav-tab active">Sales</span>
-        <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
-      </nav>
-    </header>
     
     <div class="title">💰 บันทึกยอดขาย</div>
 
@@ -174,7 +173,6 @@
               <th style="padding: 12px 8px;">ราคาขาย</th>
               <th style="padding: 12px 8px;">ค่าส่ง(ลค.)</th>
               <th style="padding: 12px 8px;">ค่าส่ง(จริง)</th>
-              <th style="padding: 12px 8px; text-align:center;">จัดการ</th>
             </tr>
           </thead>
           <tbody id="history-body">

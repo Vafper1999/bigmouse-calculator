@@ -5,28 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Big Mouse • ตัวช่วยคำนวณ/สรุปข้อความ</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="shortcut icon" type="image/x-icon" href="favicon D1.ico">
-  
+  <link rel="shortcut icon" type="image/x-icon" href="favicon D1.ico">  
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <header class="top-nav">
+    <div class="nav-title">🐭 Big Mouse • Backoffice</div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-page="calc">Pricing</button>
+      <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
+      <a href="sales.html" class="nav-tab" style="text-decoration:none;">Sales</a>
+      <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
+    </nav>
+  </header>
 </head>
+
 <body>
   <div class="wrap">
-    <header class="top-nav">
-      <div class="nav-title">🐭 Big Mouse • Backoffice</div>
-      <nav class="nav-tabs">
-        <button class="nav-tab active" data-page="calc">Pricing</button>
-        <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
-        <a href="sales.html" class="nav-tab" style="text-decoration:none;">Sales</a>
-        <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
-      </nav>
-    </header>
-
     <section id="page-calc" class="page active">
       <div class="title">🐭 Big Mouse • แจ้งราคา</div>
-      <p class="kicker">กรอกจำนวน → ได้ข้อความพร้อมคัดลอกไปวางให้ลูกค้า</p>
-
       <div class="grid">
         <section class="card">
           <div class="head"><h2>1) ตัวเลือกคำสั่งซื้อ</h2></div>

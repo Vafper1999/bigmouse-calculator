@@ -7,20 +7,19 @@
   <link rel="stylesheet" href="style_stock.css" />
   <link rel="stylesheet" href="style_orders.css" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon D1.ico">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+<header class="top-nav">
+  <div class="nav-title">🐭 Big Mouse • Orders</div>
+  <button class="settings-btn" onclick="openSettings()">⚙️</button>
+  <nav class="nav-tabs">
+    <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
+    <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
+    <a href="sales.html" class="nav-tab" style="text-decoration:none;">Sales</a>
+    <span class="nav-tab active">Purchases</span>
+  </nav>
+</header>
 <body>
   <div class="wrap">
-    <header class="top-nav">
-      <div class="nav-title">🐭 Big Mouse • Orders</div>
-      <button class="settings-btn" onclick="openSettings()">⚙️</button>
-      <nav class="nav-tabs">
-        <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
-        <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
-        <a href="sales.html" class="nav-tab" style="text-decoration:none;">Sales</a>
-        <span class="nav-tab active">Purchases</span>
-      </nav>
-    </header>
     
     <div class="title">📝 บันทึกรายจ่าย</div>
 
@@ -99,7 +98,7 @@
       <div class="head"><h2>รายการเดือนนี้</h2></div>
       <div class="stock-table-wrap">
         <table id="order-table">
-          <thead><tr><th>วันที่</th><th>รายการ</th><th>ยอดเงิน</th><th style="text-align:center;">จัดการ</th></tr></thead>
+          <thead><tr><th>วันที่</th><th>รายการ</th><th>ยอดเงิน</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
