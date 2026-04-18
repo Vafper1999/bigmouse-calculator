@@ -7,22 +7,21 @@
   <link rel="stylesheet" href="style_stock.css" />
   <link rel="stylesheet" href="style_sales.css" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon D1.ico">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<header class="top-nav">
-  <div class="nav-title">🐭 Big Mouse • Sales</div>
-  
-  <button class="settings-btn" onclick="openSettings()">⚙️</button>
-  
-  <nav class="nav-tabs">
-    <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
-    <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
-    <span class="nav-tab active">Sales</span>
-    <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
-  </nav>
-</header>
 <body>
+  <header class="top-nav">
+    <div class="nav-title">🐭 Big Mouse • Backoffice</div>
+    <button class="settings-btn" onclick="openSettings()">⚙️</button>
+    <nav class="nav-tabs">
+      <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
+      <a href="stock.html" class="nav-tab" style="text-decoration:none;">Stock</a>
+      <span class="nav-tab active">Sales</span>
+      <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
+    </nav>
+  </header>
+
   <div class="wrap">
-    
     <div class="title">💰 บันทึกยอดขาย</div>
 
     <section class="card">
@@ -65,10 +64,10 @@
       </div>
 
       <div class="row live-check-row">
-        <input type="checkbox" id="prod-live" style="width:24px; height:24px; accent-color:var(--accent);">
-        <label for="prod-live" style="margin:0 0 0 10px; font-size:16px; font-weight:bold; color:var(--text); display:flex; align-items:center;">
+        <input type="checkbox" id="prod-live">
+        <label for="prod-live" class="live-label">
           สินค้าเป็น (Live) 
-          <span style="font-weight:normal; color:gray; font-size:14px; margin-left:6px;"> (ถ้าไม่ติ๊ก = แช่แข็ง)</span>
+          <span class="live-hint"> (ถ้าไม่ติ๊ก = แช่แข็ง)</span>
         </label>
       </div>
 
@@ -83,12 +82,12 @@
         </div>
       </div>
 
-<div class="row" style="background:#f9f9f9; padding:10px; border-radius:8px; flex-wrap: wrap;">
-        <div class="col" style="flex: 1 1 45%;">
+      <div class="row prom-row">
+        <div class="col prom-col">
           <label id="lbl-prom-val">ส่วนลด (ProM.)</label>
           <input type="number" id="prom-val" placeholder="ระบุตัวเลข (ถ้ามี)">
         </div>
-        <div class="col" style="flex: 1 1 45%;">
+        <div class="col prom-col">
           <label>หน่วยส่วนลด</label>
           <select id="prom-type">
             <option value="baht">บาท (Baht)</option>
@@ -97,14 +96,12 @@
           </select>
         </div>
         
-        <div id="disc-preview-box" style="display:none; width:100%; margin-top:10px; padding-top:8px; border-top:1px dashed #ccc; text-align:right; font-size:14px;">
-          รวมส่วนลดรายการนี้: <span id="disc-preview-total" style="color:#ef4444; font-weight:bold; font-size:16px;">0</span> บาท
+        <div id="disc-preview-box" class="disc-preview-box" style="display:none;">
+          รวมส่วนลดรายการนี้: <span id="disc-preview-total" class="disc-preview-total">0</span> บาท
         </div>
       </div>
 
-      <button class="btn" onclick="addToCart()" style="width:100%; margin-top:10px; background:var(--text); color:white;">
-        + เพิ่มลงรายการ
-      </button>
+      <button class="btn add-cart-btn" onclick="addToCart()">+ เพิ่มลงรายการ</button>
 
       <div id="cart-container" class="cart-list" style="display:none;">
         <label>รายการที่เพิ่มแล้ว:</label>
@@ -154,37 +151,38 @@
       ✅ บันทึกยอดขาย
     </button>
     
-    <section class="card" style="margin-top: 20px; padding-bottom: 20px;">
-      <div class="head" style="display: flex; justify-content: space-between; align-items: center;">
+    <section class="card history-card">
+      <div class="head history-header">
         <h2>4. ประวัติการขาย</h2>
-        <select id="history-month-filter" onchange="loadSalesHistory()" style="width: auto; padding: 5px 10px; border-radius: 8px; border: 1px solid #ccc;">
+        <select id="history-month-filter" class="month-filter" onchange="loadSalesHistory()">
           <option value="current">เดือนปัจจุบัน</option>
         </select>
       </div>
 
-      <div style="overflow-x: auto; margin-top: 15px;">
-        <table id="sales-history-table" style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px;">
+      <div class="history-table-wrapper">
+        <table id="sales-history-table">
           <thead>
-            <tr style="background: #f2f2f2; text-align: left; border-bottom: 2px solid #ddd;">
-              <th style="padding: 12px 8px;">วันที่</th>
-              <th style="padding: 12px 8px;">สินค้า/ไซส์</th>
-              <th style="padding: 12px 8px;">รูปแบบ</th>
-              <th style="padding: 12px 8px;">จำนวน</th>
-              <th style="padding: 12px 8px;">ราคาขาย</th>
-              <th style="padding: 12px 8px;">ค่าส่ง(ลค.)</th>
-              <th style="padding: 12px 8px;">ค่าส่ง(จริง)</th>
+            <tr>
+              <th>วันที่</th>
+              <th>สินค้า/ไซส์</th>
+              <th>รูปแบบ</th>
+              <th>จำนวน</th>
+              <th>ราคาขาย</th>
+              <th>ค่าส่ง(ลค.)</th>
+              <th>ค่าส่ง(จริง)</th>
+              <th style="text-align:center;">จัดการ</th>
             </tr>
           </thead>
           <tbody id="history-body">
             <tr>
-              <td colspan="7" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ...</td>
+              <td colspan="8" style="text-align: center; padding: 20px; color: gray;">กำลังโหลดข้อมูลประวัติ...</td>
             </tr>
           </tbody>
         </table>
       </div>
       
-      <div id="history-summary" style="margin-top: 15px; padding: 10px; background: #fffde7; border-radius: 8px; font-size: 14px; font-weight: bold; border: 1px solid #ffe57f; display: none;">
-        ยอดขายรวมเดือนนี้: <span id="sum-monthly-price" style="color:var(--accent);">0</span> บาท | 
+      <div id="history-summary" class="history-summary-box" style="display: none;">
+        ยอดขายรวม: <span id="sum-monthly-price" style="color:var(--accent);">0</span> บาท | 
         กำไรค่าส่ง: <span id="sum-monthly-ship" style="color:var(--text);">0</span> บาท
       </div>
     </section>
@@ -195,28 +193,20 @@
   <div id="settings-modal" class="modal">
     <div class="modal-content">
       <h3 style="margin-top:0;">⚙️ ตั้งค่าไฟล์ข้อมูล</h3>
-      <p style="font-size:14px; color:#666; margin-bottom: 20px;">
-        เมื่อขึ้นปีใหม่ หรือเปลี่ยนไฟล์ Google Sheet ให้เอาลิงก์ไฟล์ใหม่มาวางที่นี่ครับ
-      </p>
+      <p class="settings-desc">เมื่อขึ้นปีใหม่ หรือเปลี่ยนไฟล์ Google Sheet ให้เอาลิงก์ไฟล์ใหม่มาวางที่นี่ครับ</p>
       
-      <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">
-        1. ลิงก์ Google Sheet สำหรับบันทึกยอดขาย (Sales):
-      </label>
-      <input type="text" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/..." 
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:15px; box-sizing: border-box;">
+      <label class="settings-lbl">1. ลิงก์ Google Sheet สำหรับบันทึกยอดขาย (Sales):</label>
+      <input type="text" id="sheet-url-input" class="settings-input" placeholder="https://docs.google.com/spreadsheets/d/...">
       
-      <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">
-        2. ลิงก์ Google Sheet สำหรับอัปเดตกระเป๋าเงิน (Purchases):
-      </label>
-      <input type="text" id="wallet-url-input" placeholder="วางลิงก์ไฟล์เดียวกับหน้า Purchases" 
-             style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:20px; box-sizing: border-box;">
+      <label class="settings-lbl">2. ลิงก์ Google Sheet สำหรับอัปเดตกระเป๋าเงิน (Purchases):</label>
+      <input type="text" id="wallet-url-input" class="settings-input" placeholder="วางลิงก์ไฟล์เดียวกับหน้า Purchases" style="margin-bottom:20px;">
       
       <div style="display:flex; gap:10px;">
         <button class="btn" onclick="saveSettings()" style="flex:1;">บันทึก</button>
         <button class="btn" onclick="closeSettings()" style="flex:1; background:#ccc; color:#333;">ปิด</button>
       </div>
     </div>
-</div>
+  </div>
 
   <script src="script_sales.js"></script>
 </body>

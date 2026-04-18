@@ -212,7 +212,7 @@ input[type="checkbox"] + label {
   white-space: nowrap;
 }
 #sales-history-table td {
-  padding: 12px 10px !important;
+  padding: 7px 50px 8px 10px !important;
   border-bottom: 1px solid var(--border) !important;
   color: var(--text);
   white-space: nowrap;
@@ -236,3 +236,93 @@ input[type="checkbox"] + label {
   font-size: 18px;
   color: var(--accent) !important;
 }
+/* =========================================
+   สไตล์ที่ย้ายมาจาก Inline HTML
+   ========================================= */
+.live-label {
+  margin: 0 0 0 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+}
+.live-hint {
+  font-weight: normal;
+  color: gray;
+  font-size: 14px;
+  margin-left: 6px;
+}
+.prom-row {
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.prom-col { flex: 1 1 45%; }
+.disc-preview-box {
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #ccc;
+  text-align: right;
+  font-size: 14px;
+}
+.disc-preview-total {
+  color: #ef4444;
+  font-weight: bold;
+  font-size: 16px;
+}
+.add-cart-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--text);
+  color: white;
+}
+.history-card {
+  margin-top: 20px;
+  padding-bottom: 20px;
+}
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.month-filter {
+  width: auto;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+.history-table-wrapper {
+  overflow-x: auto;
+  margin-top: 15px;
+}
+.settings-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+.settings-lbl {
+  font-size: 12px;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+.settings-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+.action-icon {
+  cursor: pointer;
+  font-size: 18px;
+  color: gray;
+  margin-left: 8px;
+  transition: transform 0.2s;
+}
+.action-icon:hover { transform: scale(1.2); }
+.edit-icon { font-size: 16px; }

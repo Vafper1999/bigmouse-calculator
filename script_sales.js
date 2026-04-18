@@ -25,14 +25,12 @@ function init() {
   updateSizeList();
   loadSalesHistory();
   
-  // 🌟 ดักจับการพิมพ์ เพื่อให้คำนวณส่วนลดโชว์แบบ Real-time
   $('prom-type').addEventListener('change', toggleDiscountType);
   $('prom-val').addEventListener('input', calcPreviewDiscount);
   $('prod-qty').addEventListener('input', calcPreviewDiscount);
   $('prod-price').addEventListener('input', calcPreviewDiscount);
 }
 
-// 🌟 สลับข้อความ Label ตามประเภทส่วนลด
 function toggleDiscountType() {
   const type = $('prom-type').value;
   const lbl = $('lbl-prom-val');
@@ -44,7 +42,6 @@ function toggleDiscountType() {
   calcPreviewDiscount();
 }
 
-// 🌟 คำนวณยอดส่วนลดรวมโชว์ให้เห็นก่อนกดเข้าตะกร้า
 function calcPreviewDiscount() {
   const type = $('prom-type').value;
   const val = parseFloat($('prom-val').value) || 0;
@@ -54,7 +51,7 @@ function calcPreviewDiscount() {
   let totalDisc = 0;
   if (type === 'baht') totalDisc = val;
   else if (type === 'percent') totalDisc = (price * qty) * (val / 100);
-  else if (type === 'perItem') totalDisc = val * qty; // ลดต่อตัว x จำนวนหนู
+  else if (type === 'perItem') totalDisc = val * qty; 
   
   const previewBox = $('disc-preview-box');
   if (totalDisc > 0) {
@@ -65,7 +62,6 @@ function calcPreviewDiscount() {
   }
 }
 
-// --- ส่วนจัดการ Settings (ปุ่มเฟือง) ---
 function openSettings() { $('settings-modal').style.display = 'flex'; }
 function closeSettings() { $('settings-modal').style.display = 'none'; }
 
@@ -106,7 +102,7 @@ function updatePrice() {
   const priceType = isWholesale ? 'wholesale' : 'retail';
   const price = PRICES[animal][priceType][size] || 0;
   $('prod-price').value = price;
-  calcPreviewDiscount(); // 🌟 อัปเดตส่วนลดเวลาเปลี่ยนราคา
+  calcPreviewDiscount(); 
 }
 
 function addToCart() {
@@ -129,11 +125,10 @@ function addToCart() {
   
   if (promVal > 0) {
     if (promType === 'percent') discountBaht = totalRaw * (promVal / 100);
-    else if (promType === 'perItem') discountBaht = promVal * qty; // 🌟 คำนวณลดต่อตัว
+    else if (promType === 'perItem') discountBaht = promVal * qty; 
     else discountBaht = promVal;
   }
 
-  // 🌟 ปรับคำที่โชว์ในตะกร้าให้ตรงกับประเภทที่ลด
   let displayTxt = '';
   if (promVal > 0) {
       if (promType === 'percent') displayTxt = `ลด ${promVal}%`;
@@ -150,7 +145,7 @@ function addToCart() {
   $('prod-qty').value = '';
   $('prom-val').value = '';
   $('prod-live').checked = false; 
-  $('disc-preview-box').style.display = 'none'; // 🌟 ซ่อนกล่องสรุปหลังเพิ่มลงตะกร้า
+  $('disc-preview-box').style.display = 'none'; 
   
   renderCart();
 }
@@ -263,7 +258,7 @@ function renderHistoryTable(records) {
 
     const typeLabel = (item.type === 'เป็น' || item.type === 'Live') ? '<span style="color:green; font-weight:bold;">[เป็น]</span>' : '<span style="color:blue; font-weight:bold;">[แช่]</span>';
 
-    // 🌟 เพิ่มปุ่มแก้ไขค่าส่ง และปุ่มลบ
+    // 🌟 เปลี่ยนไปใช้ Class action-icon จาก CSS ใหม่
     tr.innerHTML = `
       <td style="padding:10px 8px;">${item.date}</td>
       <td style="padding:10px 8px;">${item.animal} ${item.size}</td>
@@ -273,10 +268,10 @@ function renderHistoryTable(records) {
       <td style="padding:10px 8px; color:gray;">${shipCharge.toLocaleString()}</td>
       <td style="padding:10px 8px; color:#ef4444; font-weight:bold;">
          ${shipActual.toLocaleString()}
-         <span style="cursor:pointer; margin-left:8px; font-size:16px;" onclick="editShipping(${item.row}, '${currentMonthVal}', ${shipActual})" title="แก้ไขค่าส่ง">✏️</span>
+         <span class="action-icon edit-icon" onclick="editShipping(${item.row}, '${currentMonthVal}', ${shipActual})" title="แก้ไขค่าส่ง">✏️</span>
       </td>
       <td style="padding:10px 8px; text-align:center;">
-         <span style="cursor:pointer; font-size:18px; color:gray;" onclick="deleteSale(${item.row}, '${currentMonthVal}')" title="ลบรายการนี้">🗑️</span>
+         <span class="action-icon" onclick="deleteSale(${item.row}, '${currentMonthVal}')" title="ลบรายการนี้">🗑️</span>
       </td>
     `;
     tbody.appendChild(tr);
@@ -290,7 +285,7 @@ function renderHistoryTable(records) {
 }
 
 // ============================================================
-// 🌟 2 ฟังก์ชันใหม่: แก้ไข และ ลบรายการ 
+// 🌟 2 ฟังก์ชันแก้ไข และ ลบรายการ (แก้บั๊กเพิ่ม Header แล้ว)
 // ============================================================
 async function editShipping(row, month, currentVal) {
   if (!month || month === 'current') {
@@ -309,7 +304,12 @@ async function editShipping(row, month, currentVal) {
   if (newAmt !== undefined && newAmt !== null && newAmt !== String(currentVal)) {
     Swal.fire({ title: 'กำลังอัปเดต...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     try {
-      const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateShipActual', row: row, month: month, newActual: parseFloat(newAmt) || 0 }) });
+      // 🌟 เพิ่ม headers: { 'Content-Type': 'text/plain;charset=utf-8' } ตรงนี้
+      const res = await fetch(SCRIPT_URL, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'updateShipActual', row: row, month: month, newActual: parseFloat(newAmt) || 0 }) 
+      });
       const result = await res.json();
       if (result.status === 'success') { Swal.fire('สำเร็จ', result.message, 'success'); loadSalesHistory(); } 
       else throw new Error(result.message);
@@ -334,7 +334,12 @@ async function deleteSale(row, month) {
   if (confirm.isConfirmed) {
     Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     try {
-      const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteSaleItem', row: row, month: month }) });
+      // 🌟 เพิ่ม headers: { 'Content-Type': 'text/plain;charset=utf-8' } ตรงนี้
+      const res = await fetch(SCRIPT_URL, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'deleteSaleItem', row: row, month: month }) 
+      });
       const result = await res.json();
       if (result.status === 'success') { Swal.fire('ลบสำเร็จ', result.message, 'success'); loadSalesHistory(); } 
       else throw new Error(result.message);
