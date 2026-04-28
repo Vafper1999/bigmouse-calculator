@@ -674,3 +674,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   try { await liff.init({ liffId: LIFF_ID }); } catch (err) {}
 });
+// ==========================================
+// 🌙 ระบบ Dark Mode
+// ==========================================
+function toggleTheme() {
+  const body = document.body;
+  const btn = document.getElementById('theme-toggle');
+  
+  // สลับคลาส dark-mode
+  body.classList.toggle('dark-mode');
+  
+  // เปลี่ยนไอคอนและจำค่าลงเครื่อง (localStorage)
+  if (body.classList.contains('dark-mode')) {
+    btn.textContent = '☀️';
+    localStorage.setItem('theme', 'dark');
+  } else {
+    btn.textContent = '🌙';
+    localStorage.setItem('theme', 'light');
+  }
+}
+
+// 🌟 ให้โหลดค่าเดิมตอนเปิดหน้าเว็บมาใหม่
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('theme-toggle');
+    if(btn) btn.textContent = '☀️';
+  }
+});

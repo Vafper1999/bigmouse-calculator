@@ -231,3 +231,129 @@ tbody tr:nth-child(even){ background:#f9fafb; }
   .card{padding:12px; margin-bottom:12px;}
   th,td{padding:8px; font-size:13px;}
 }
+/* =========================================
+   🌙 ระบบ Dark Mode
+   ========================================= */
+body.dark-mode {
+  --bg: #111827;       /* สีพื้นหลังเว็บ (ดำเทา) */
+  --soft: #1f2937;     /* สีพื้นหลังกล่อง/การ์ด (เทาเข้ม) */
+  --text: #f9fafb;     /* สีตัวอักษร (ขาว) */
+  --muted: #9ca3af;    /* สีตัวอักษรรอง (เทาอ่อน) */
+  --border: #374151;   /* สีเส้นขอบ (เทากลาง) */
+}
+
+/* บังคับสีพื้นหลังให้เปลี่ยนตามตัวแปร */
+body.dark-mode {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* ปุ่มกดสลับโหมด */
+.theme-btn {
+  font-size: 20px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0 10px;
+  transition: transform 0.2s;
+}
+.theme-btn:hover { transform: scale(1.1); }
+
+/* ⚠️ สำคัญ: คลาสไหนที่เคยตั้งสีขาวตายตัวไว้ ให้เปลี่ยนไปใช้ตัวแปร --soft */
+body.dark-mode .card,
+body.dark-mode .stat-card,
+body.dark-mode .modal-content,
+body.dark-mode header.top-nav {
+  background-color: var(--soft);
+  border-color: var(--border);
+}
+/* =========================================
+   🛠️ ไม้ตาย: ซ่อมสีกล่องและตารางที่ดื้อในโหมดมืด
+   ========================================= */
+
+/* 1. บังคับตารางทั้งหมดไม่ให้สลับสีขาว-ดำ */
+body.dark-mode table,
+body.dark-mode tbody tr,
+body.dark-mode tbody tr:nth-child(odd),
+body.dark-mode tbody tr:nth-child(even),
+body.dark-mode td,
+body.dark-mode th {
+  background-color: transparent !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* 2. บังคับ Input ทุกตัวในตารางและในการ์ดให้มืดสนิท (แก้ช่องราคา/ช่องกรอกตัวเลขที่ขาวอยู่) */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background-color: #111827 !important; /* ใช้สีดำเทา */
+  color: #f9fafb !important;            /* ข้อความสีขาว */
+  border: 1px solid #374151 !important; /* เส้นขอบสีเทาเข้ม */
+}
+
+/* ตอนคลิกพิมพ์ให้ขอบสว่างขึ้นนิดนึง */
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #3b82f6 !important; 
+  outline: none !important;
+}
+
+/* 3. บังคับกล่อง Google Sheet (ที่ถูกฝังสีพื้นหลัง #f8f9fa ไว้ใน HTML) */
+body.dark-mode div[style*="background: #f8f9fa"],
+body.dark-mode div[style*="background:#f8f9fa"] {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+}
+
+/* 4. ปรับสีข้อความเล็กๆ (Hint) หรือคำอธิบายไม่ให้กลืนหาย */
+body.dark-mode .hint,
+body.dark-mode .muted,
+body.dark-mode label[style*="color: #333"] {
+  color: #9ca3af !important; /* เปลี่ยนเป็นสีเทาอ่อนให้มองเห็นในโหมดมืด */
+}
+
+/* 5. กล่องข้อความพร้อมคัดลอก */
+body.dark-mode .msg {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+}
+/* =========================================
+   💊 ซ่อมปุ่มวงรี (Pill) และปุ่มเลือก ในโหมดมืด
+   ========================================= */
+
+/* 1. บังคับพื้นหลังและสีตัวอักษรของปุ่มวงรีทั้งหมด */
+body.dark-mode .pill,
+body.dark-mode label.pill,
+body.dark-mode .inline label,
+body.dark-mode .inline span.pill {
+  background-color: #1f2937 !important; /* สีเทาเข้ม (soft) */
+  color: #f9fafb !important;            /* ตัวหนังสือขาว */
+  border: 1px solid #374151 !important; /* ขอบเทา */
+}
+
+/* 2. บังคับสีตัวอักษรข้างในปุ่ม (กรณีเป็นแท็ก span) */
+body.dark-mode .pill span,
+body.dark-mode label.pill span {
+  color: #f9fafb !important;
+}
+
+/* 3. จัดการตอนที่ "เลือก" (Checked) ให้สีเด่นขึ้นมาหน่อย */
+body.dark-mode .pill input:checked + span,
+body.dark-mode label.pill input:checked + span {
+  color: var(--accent) !important; /* ใช้สีหลักของเว็บคุณว๊าฟ */
+  font-weight: bold;
+}
+
+/* 4. ปรับสี Checkbox และ Radio พื้นฐานให้ดูง่ายขึ้น */
+body.dark-mode input[type="checkbox"],
+body.dark-mode input[type="radio"] {
+  filter: invert(1) hue-rotate(180deg); /* กลับสีตัวเลือกให้สว่างขึ้น */
+  cursor: pointer;
+}
+
+/* 5. ซ่อมพื้นหลังสีขาวที่หลุดมาตรงปุ่มเลือกประเภท */
+body.dark-mode .inline {
+  background-color: transparent !important;
+}
