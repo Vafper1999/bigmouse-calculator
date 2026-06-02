@@ -37,7 +37,7 @@ function toggleDiscountType() {
   if (type === 'perItem') {
     lbl.textContent = 'ราคา/ตัวที่ลด (฿)';
   } else {
-    lbl.textContent = 'ส่วนลด (ProM.)';
+    lbl.textContent = 'ส่วนลดพิเศษ (ProM.)';
   }
   calcPreviewDiscount();
 }
@@ -62,8 +62,8 @@ function calcPreviewDiscount() {
   }
 }
 
-function openSettings() { $('settings-modal').style.display = 'flex'; }
-function closeSettings() { $('settings-modal').style.display = 'none'; }
+function openSettings() { $('settings-modal').classList.add('open'); }
+function closeSettings() { $('settings-modal').classList.remove('open'); }
 
 async function saveSettings() {
   const salesUrl = $('sheet-url-input').value; 
@@ -163,16 +163,17 @@ function renderCart() {
   cart.forEach((item, index) => {
     const sum = (item.price * item.qty) - item.discount;
     totalNet += sum;
-    const condition = item.isLive ? '<span style="color:green">[เป็น]</span>' : '<span style="color:blue">[แช่]</span>';
+    // ปรับสีให้เข้าธีม
+    const condition = item.isLive ? '<span style="color:#ff6a00; font-weight:700;">[เป็น]</span>' : '<span style="color:#111111; font-weight:700;">[แช่]</span>';
     const div = document.createElement('div');
     div.className = 'cart-item';
     div.innerHTML = `
       <div>
         <b>${item.animal} ${item.size}</b> ${condition}<br>
-        ${item.price} x ${item.qty} = ${(item.price * item.qty).toLocaleString()} 
-        <span style="color:red; font-size:12px;">${item.promDisplay ? '- ' + item.discount + ' บ. ' + item.promDisplay : ''}</span>
+        <span style="color:#666666;">${item.price} x ${item.qty} = ${(item.price * item.qty).toLocaleString()}</span> 
+        <span style="color:#ff6a00; font-size:12px; font-weight:600;">${item.promDisplay ? '- ' + item.discount + ' บ. ' + item.promDisplay : ''}</span>
       </div>
-      <div style="font-weight:bold;">${sum.toLocaleString()} บ.</div>
+      <div style="font-weight:800; font-size:16px;">${sum.toLocaleString()} บ.</div>
       <div class="cart-del" onclick="remItem(${index})">×</div>
     `;
     container.appendChild(div);
@@ -191,7 +192,7 @@ async function submitSaleOrder() {
   const btn = $('btn-save');
   const oldTxt = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '⏳ กำลังบันทึก...';
+  btn.textContent = '⏳ กำลังบันทึกออเดอร์...';
 
   try {
     const payload = {
@@ -233,7 +234,7 @@ async function loadSalesHistory() {
       }
       renderHistoryTable(data.records);
     }
-  } catch (error) { if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red; padding:20px;">เกิดข้อผิดพลาด</td></tr>'; }
+  } catch (error) { if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444; padding:20px;">เกิดข้อผิดพลาดในการโหลด</td></tr>'; }
 }
 
 function renderHistoryTable(records) {
@@ -246,31 +247,31 @@ function renderHistoryTable(records) {
   let sumPrice = 0; let sumShipProfit = 0;
 
   if (!records || records.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูล</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:gray;">ไม่มีข้อมูลการขายในเดือนนี้</td></tr>';
     if (summary) summary.style.display = 'none'; return;
   }
 
   records.forEach(item => {
-    const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
+    const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #e2e8f0";
     const shipCharge = parseFloat(item.shipCharge) || 0; const shipActual = parseFloat(item.shipActual) || 0;
     const shipProfit = shipCharge - shipActual; const price = parseFloat(item.price) || 0;
     sumPrice += price; sumShipProfit += shipProfit;
 
-    const typeLabel = (item.type === 'เป็น' || item.type === 'Live') ? '<span style="color:green; font-weight:bold;">[เป็น]</span>' : '<span style="color:blue; font-weight:bold;">[แช่]</span>';
+    // ปรับสีให้เข้าธีม
+    const typeLabel = (item.type === 'เป็น' || item.type === 'Live') ? '<span style="color:#ff6a00; font-weight:bold;">[เป็น]</span>' : '<span style="color:#111111; font-weight:bold;">[แช่]</span>';
 
-    // 🌟 เปลี่ยนไปใช้ Class action-icon จาก CSS ใหม่
     tr.innerHTML = `
-      <td style="padding:10px 8px;">${item.date}</td>
-      <td style="padding:10px 8px;">${item.animal} ${item.size}</td>
-      <td style="padding:10px 8px;">${typeLabel}</td>
-      <td style="padding:10px 8px;">${item.qty}</td>
-      <td style="padding:10px 8px; font-weight:bold;">${price.toLocaleString()}</td>
-      <td style="padding:10px 8px; color:gray;">${shipCharge.toLocaleString()}</td>
-      <td style="padding:10px 8px; color:#ef4444; font-weight:bold;">
+      <td>${item.date}</td>
+      <td style="font-weight:600;">${item.animal} ${item.size}</td>
+      <td>${typeLabel}</td>
+      <td>${item.qty}</td>
+      <td style="font-weight:bold;">${price.toLocaleString()}</td>
+      <td style="color:#666666;">${shipCharge.toLocaleString()}</td>
+      <td style="color:#ff6a00; font-weight:bold;">
          ${shipActual.toLocaleString()}
          <span class="action-icon edit-icon" onclick="editShipping(${item.row}, '${currentMonthVal}', ${shipActual})" title="แก้ไขค่าส่ง">✏️</span>
       </td>
-      <td style="padding:10px 8px; text-align:center;">
+      <td style="text-align:center;">
          <span class="action-icon" onclick="deleteSale(${item.row}, '${currentMonthVal}')" title="ลบรายการนี้">🗑️</span>
       </td>
     `;
@@ -284,9 +285,6 @@ function renderHistoryTable(records) {
   }
 }
 
-// ============================================================
-// 🌟 2 ฟังก์ชันแก้ไข และ ลบรายการ (แก้บั๊กเพิ่ม Header แล้ว)
-// ============================================================
 async function editShipping(row, month, currentVal) {
   if (!month || month === 'current') {
       const dateObj = new Date(); month = dateObj.getFullYear() + '-' + ("0" + (dateObj.getMonth() + 1)).slice(-2);
@@ -304,7 +302,6 @@ async function editShipping(row, month, currentVal) {
   if (newAmt !== undefined && newAmt !== null && newAmt !== String(currentVal)) {
     Swal.fire({ title: 'กำลังอัปเดต...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     try {
-      // 🌟 เพิ่ม headers: { 'Content-Type': 'text/plain;charset=utf-8' } ตรงนี้
       const res = await fetch(SCRIPT_URL, { 
           method: 'POST', 
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -334,7 +331,6 @@ async function deleteSale(row, month) {
   if (confirm.isConfirmed) {
     Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     try {
-      // 🌟 เพิ่ม headers: { 'Content-Type': 'text/plain;charset=utf-8' } ตรงนี้
       const res = await fetch(SCRIPT_URL, { 
           method: 'POST', 
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -348,31 +344,15 @@ async function deleteSale(row, month) {
 }
 
 window.addEventListener('DOMContentLoaded', init);
-// ==========================================
-// 🌙 ระบบ Dark Mode
-// ==========================================
-function toggleTheme() {
-  const body = document.body;
-  const btn = document.getElementById('theme-toggle');
-  
-  // สลับคลาส dark-mode
-  body.classList.toggle('dark-mode');
-  
-  // เปลี่ยนไอคอนและจำค่าลงเครื่อง (localStorage)
-  if (body.classList.contains('dark-mode')) {
-    btn.textContent = '☀️';
-    localStorage.setItem('theme', 'dark');
-  } else {
-    btn.textContent = '🌙';
-    localStorage.setItem('theme', 'light');
-  }
-}
 
-// 🌟 ให้โหลดค่าเดิมตอนเปิดหน้าเว็บมาใหม่
-window.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark-mode');
-    const btn = document.getElementById('theme-toggle');
-    if(btn) btn.textContent = '☀️';
-  }
-});
+// ============================================================
+// 📱 Mobile Hamburger Menu Toggle
+// ============================================================
+const menuToggle = document.getElementById('menuToggle');
+const navTabs = document.getElementById('navTabs');
+
+if (menuToggle && navTabs) {
+  menuToggle.addEventListener('click', () => {
+    navTabs.classList.toggle('open');
+  });
+}

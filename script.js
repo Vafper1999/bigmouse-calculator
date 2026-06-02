@@ -145,7 +145,7 @@ function parseCSV(text) {
 }
 
 // ============================================================
-// 🌟 Build Table 
+// 🌟 Build Table (แก้ไขอินพุตราคาขายเพื่อให้แมตช์ธีมมินิมอลส้ม)
 // ============================================================
 function buildTable(){
   const animals = getSelectedAnimals();
@@ -155,7 +155,7 @@ function buildTable(){
   customPriceInputs=[];
 
   if(animals.length===0){
-    $("#tableWrap").innerHTML='<div class="hint">โปรดเลือกอย่างน้อย 1 ประเภท (Mice/Rat)</div>';
+    $("#tableWrap").innerHTML='<div class="hint" style="padding: 20px; text-align: center;">โปรดเลือกอย่างน้อย 1 ประเภทด้านบน (Mice/Rat)</div>';
     return;
   }
 
@@ -165,18 +165,18 @@ function buildTable(){
       const unit=priceIdx===1?ret:whl;
       return `
         <tr>
-          <td>${size}</td>
+          <td style="font-weight: 600;">${size}</td>
           <td class="muted">${fmt(unit)}</td>
-          <td><input type="number" min="0" step="0.5" data-animal="${animal}" data-size="${size}" class="custom-price" placeholder="${unit}" style="width:65px; text-align:center; border: 1px solid #3b82f6; background: #eff6ff;"></td>
-          <td><input type="number" min="0" step="1" data-animal="${animal}" data-type="fresh" data-size="${size}" data-unit="${unit}" class="qty" placeholder="0"></td>
-          <td><input type="number" min="0" step="1" data-animal="${animal}" data-type="frozen" data-size="${size}" data-unit="${unit}" class="qty" placeholder="0"></td>
-          <td class="line" data-animal="${animal}" data-size="${size}">0</td>
+          <td><input type="number" min="0" step="0.5" data-animal="${animal}" data-size="${size}" class="custom-price" placeholder="${unit}" style="width:75px; text-align:center; border: 1px solid var(--accent); background: #fffdfa; padding: 6px; font-size:13px; font-weight:700; color:var(--accent);"></td>
+          <td><input type="number" min="0" step="1" data-animal="${animal}" data-type="fresh" data-size="${size}" data-unit="${unit}" class="qty" placeholder="0" style="padding: 6px; font-size:14px;"></td>
+          <td><input type="number" min="0" step="1" data-animal="${animal}" data-type="frozen" data-size="${size}" data-unit="${unit}" class="qty" placeholder="0" style="padding: 6px; font-size:14px;"></td>
+          <td class="line" data-animal="${animal}" data-size="${size}" style="font-weight: 700;">0</td>
         </tr>`;
     }).join("");
     html += `
-      <div class="head" style="margin-top:6px"><h2>${animalLabel(animal)}</h2></div>
+      <div class="head" style="margin-top:16px; padding-left: 6px;"><h2 style="color:var(--text);">${animalLabel(animal)}</h2></div>
       <table><thead><tr>
-        <th>ไซส์</th><th>ราคาปกติ</th><th>ราคาขาย</th><th>แช่ (ตัว)</th><th>เป็น (ตัว)</th><th>รวม</th>
+        <th>ไซส์</th><th>ราคาปกติ</th><th>ราคาขายพิเศษ</th><th>แช่ (ตัว)</th><th>เป็น (ตัว)</th><th>รวม (บาท)</th>
       </tr></thead><tbody>${rows}</tbody></table>`;
   });
 
@@ -295,7 +295,7 @@ function closeReceipt(){ $("#billModal").classList.remove("open"); }
 async function copyReceipt(){ await navigator.clipboard.writeText($("#billContent").innerText); }
 function buildReceiptHTML(){
     const now=new Date();
-    let html=`<div class="meta">วันที่ ${now.toLocaleDateString('th-TH')}</div><table><thead><tr><th>รายการ</th><th>ยอด</th></tr></thead><tbody>`;
+    let html=`<div class="meta">วันที่ ${now.toLocaleDateString('th-TH')}</div><table><thead><tr><th>รายการสินค้า</th><th>ยอดรวม</th></tr></thead><tbody>`;
     
     let subFullPrice = 0;
     let customDiscTotal = 0;
@@ -333,7 +333,7 @@ function buildReceiptHTML(){
     const shipMethod=$("#shipMethod").value;
     const grand = subFullPrice - totalDiscount + ship;
     
-    html+=`</tbody><tfoot><tr><td>รวม</td><td>${fmt(subFullPrice)}</td></tr>${totalDiscount>0?`<tr><td>ส่วนลด</td><td style="color:red;">-${fmt(totalDiscount)}</td></tr>`:''}${ship>0?`<tr><td>ค่าส่ง</td><td>${fmt(ship)}</td></tr>`:''}<tr><td class="grand">สุทธิ</td><td class="grand">${fmt(grand)}</td></tr></tfoot></table>`;
+    html+=`</tbody><tfoot><tr><td>รวมค่าสินค้า</td><td>${fmt(subFullPrice)}</td></tr>${totalDiscount>0?`<tr><td>ส่วนลดหักออก</td><td style="color:#df2121;">-${fmt(totalDiscount)}</td></tr>`:''}${ship>0?`<tr><td>ค่าส่ง (${shipMethod})</td><td>${fmt(ship)}</td></tr>`:''}<tr><td class="grand">สุทธิที่ต้องชำระ</td><td class="grand">${fmt(grand)}</td></tr></tfoot></table>`;
     return html;
 }
 
@@ -412,8 +412,8 @@ async function sendFlexBill() {
             flexItems.push({
                 "type": "box", "layout": "baseline", "spacing": "sm",
                 "contents": [
-                    { "type": "text", "text": `   ↳ ลดเหลือ ${fmt(i.effectivePrice)}฿/ตัว`, "size": "xs", "color": "#06c755", "flex": 3 },
-                    { "type": "text", "text": `-${fmt(i.lineDisc)}`, "size": "xs", "color": "#06c755", "align": "end", "flex": 1 }
+                    { "type": "text", "text": `   ↳ ลดเหลือ ${fmt(i.effectivePrice)}฿/ตัว`, "size": "xs", "color": "#ff6a00", "flex": 3 },
+                    { "type": "text", "text": `-${fmt(i.lineDisc)}`, "size": "xs", "color": "#ff6a00", "align": "end", "flex": 1 }
                 ]
             });
         }
@@ -561,7 +561,7 @@ async function sendTrackingFlex() {
                     "type": "box", "layout": "baseline", "spacing": "sm",
                     "contents": [
                         { "type": "text", "text": "เลขพัสดุ:", "color": "#aaaaaa", "size": "sm", "flex": 2 },
-                        { "type": "text", "text": trackNo, "wrap": true, "color": "#06c755", "size": "md", "flex": 5, "weight": "bold" }
+                        { "type": "text", "text": trackNo, "wrap": true, "color": "#ff6a00", "size": "md", "flex": 5, "weight": "bold" }
                     ]
                 },
                 {
@@ -674,31 +674,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   try { await liff.init({ liffId: LIFF_ID }); } catch (err) {}
 });
-// ==========================================
-// 🌙 ระบบ Dark Mode
-// ==========================================
-function toggleTheme() {
-  const body = document.body;
-  const btn = document.getElementById('theme-toggle');
-  
-  // สลับคลาส dark-mode
-  body.classList.toggle('dark-mode');
-  
-  // เปลี่ยนไอคอนและจำค่าลงเครื่อง (localStorage)
-  if (body.classList.contains('dark-mode')) {
-    btn.textContent = '☀️';
-    localStorage.setItem('theme', 'dark');
-  } else {
-    btn.textContent = '🌙';
-    localStorage.setItem('theme', 'light');
-  }
-}
 
-// 🌟 ให้โหลดค่าเดิมตอนเปิดหน้าเว็บมาใหม่
-window.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark-mode');
-    const btn = document.getElementById('theme-toggle');
-    if(btn) btn.textContent = '☀️';
-  }
-});
+// ============================================================
+// 📱 Mobile Hamburger Menu Toggle
+// ============================================================
+const menuToggle = document.getElementById('menuToggle');
+const navTabs = document.getElementById('navTabs');
+
+if (menuToggle && navTabs) {
+  menuToggle.addEventListener('click', () => {
+    navTabs.classList.toggle('open');
+  });
+}

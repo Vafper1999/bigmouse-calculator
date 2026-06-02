@@ -1,524 +1,561 @@
-:root{
-  /* CI: white / gray / black; buttons & accents: green */
-  --bg:#ffffff;            /* page background */
-  --card:#ffffff;          /* card background */
-  --soft:#f3f4f6;          /* light gray surfaces */
-  --accent:#353535;        /* green for buttons/highlights */
-  --text:#111827;          /* near-black text */
-  --muted:#6b7280;         /* secondary text */
-  --ok:#353535;            /* success green */
-  --border:#e5e7eb;        /* base border color */
-  --border-soft:#eceff1;   /* softer border */
-  --radius:16px;
+:root {
+  /* Minimal Business Premium Palette */
+  --bg: #f8f9fa;            /* Light premium executive workspace background */
+  --card: #ffffff;          /* Crisp pure white for cards */
+  --text: #111111;          /* Elegant absolute high-contrast black text */
+  --muted: #666666;         /* Refined subtle slate neutral grey */
+  --accent: #ff6a00;        /* Dynamic Premium Business Orange for Key Action Buttons/Tab active States */
+  --accent-hover: #e05d00;  /* Slightly deeper rich orange for rich interactions */
+  --border: #e2e8f0;        /* Ultrathin clean border architecture */
+  --border-focus: #111111;  /* High contrast black focus indicator */
+  --radius: 8px;            /* Sleek micro-radius for modern enterprise system look */
+  --input-bg: #ffffff;
 }
 
-/* Base & layout */
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-  background:var(--soft);
-  color:var(--text)
+/* Base resets & structural definitions */
+* {
+  box-sizing: border-box;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
-.wrap{
-  max-width:1100px;
-  margin:auto;
-  padding:clamp(14px,3vw,24px);
-  padding-bottom:24px;
-  min-height:100vh;
+html {
+  scroll-behavior: smooth;
 }
-.title{
-  font-weight:700;
-  font-size:clamp(18px,2.2vw,22px);
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin:4px 0px 20px;
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
-.kicker{
-  font-size:12px;
-  color:var(--muted);
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  margin:0 0 14px
+.wrap {
+  max-width: 1200px;
+  margin: auto;
+  padding: 24px;
+  min-height: calc(100vh - 60px);
+}
+.title {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text);
+  margin: 10px 0 24px 0;
+  letter-spacing: -0.02em;
 }
 
-/* Top navigation */
-.top-nav{
-  position:sticky;
-  top:0;
-  z-index:50;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:8px clamp(35px,3vw,24px);
-  margin:0 calc(-1 * clamp(14px,3vw,24px)) 10px;
-  background:var(--bg);
-  border-bottom:1px solid var(--border-soft);
-  overflow-x:auto;
+/* Enterprise Top Navigation Layout Header */
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 60px;
+  background: #111111; /* Executive Charcoal Black Bar */
+  color: #ffffff;
+  border-bottom: 1px solid #222222;
 }
-.nav-title{
-  font-weight:700;
-  font-size:14px;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  white-space:nowrap;
+.nav-title {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
 }
-.nav-tabs{
-  display:flex;
-  gap:8px;
+.nav-divider {
+  color: #444444;
+  margin: 0 10px;
+  font-weight: 300;
 }
-.nav-tab{
-  border-radius:999px;
-  padding:8px 14px;
-  font-size:13px;
-  border:1px solid transparent;
-  background:transparent;
-  color:var(--muted);
+.nav-subtitle {
+  color: #aaaaaa;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.nav-tabs {
+  display: flex;
+  height: 100%;
+}
+.nav-tab {
+  height: 100%;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: #aaaaaa;
+  border: none;
   cursor:pointer;
-  white-space:nowrap;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
 }
-.nav-tab.active{
-  background:var(--soft);
-  border-color:var(--border);
-  color:var(--text);
+.nav-tab:hover {
+  color: #ffffff;
 }
-
-/* Grid: stacks on phones, 2 columns on ≥900px */
-.grid{
-  display:grid;
-  gap:16px
-}
-@media(min-width:900px){
-  .grid{grid-template-columns:1.1fr .9fr}
+.nav-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent); /* Highlight tab with elegant premium orange line */
+  background: rgba(255, 255, 255, 0.03);
 }
 
-/* Page visibility for multi-page layout */
-.page{display:none;}
-.page.active{display:block;}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px 16px;
-  box-shadow:0 1px 3px rgba(0,0,0,.06);
-  margin-bottom:16px;
+/* Responsive Grid Splitter */
+.grid {
+  display: grid;
+  gap: 24px;
 }
-.head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:12px
-}
-.head h2{
-  font-size:clamp(15px,2.2vw,18px);
-  margin:0;
-  font-weight:700
+@media(min-width: 960px){
+  .grid { grid-template-columns: 1.15fr 0.85fr; }
 }
 
-.row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  margin:10px 0
+/* Container Cards Setup */
+.page { display: none; }
+.page.active { display: block; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
 }
-label{
-  font-size:12px;
-  color:var(--muted);
-  display:block;
-  margin:0 0 6px
+.head {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+.head h2 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
-/* Inputs: larger touch targets, no iOS zoom */
+/* Elegant Form Controls & Inputs */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 14px 0;
+}
+.row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 14px 0;
+}
+label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
 select,
 input[type="number"],
-input[type="text"]{
-  background:#fff;
-  border:1px solid var(--border);
-  color:var(--text);
-  border-radius:10px;
-  padding:12px 12px;
-  font-size:16px;
-  outline:none;
-  width:100%;
+input[type="text"] {
+  background: var(--input-bg);
+  border: 1px solid #cbd5e1;
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  transition: all 0.15s ease;
 }
 select:focus,
-input:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent)
+input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.05);
 }
 
-/* Mobile-friendly touches (≥44px touch targets) */
-.btn{min-height:44px}
-
-.pill{
-  display:inline-flex;
-  gap:6px;
-  align-items:center;
-  background:#fff;
-  border:1px solid var(--border);
-  padding:8px 10px;
-  border-radius:999px
+/* Custom Minimal Segmented Control Pill Toggles */
+.inline-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.pill input{accent-color:var(--accent)}
-
-/* Table: scroll on small screens */
-#tableWrap{
-  overflow:auto;
-  border-radius:12px;
-  border:1px solid var(--border-soft)
+.pill {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  user-select: none;
+  transition: all 0.15s ease;
 }
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:100px;
-  background:#ffffff;
-  font-size:14px;
+.pill:has(input:checked) {
+  border-color: var(--text);
+  background: #f1f5f9;
+  font-weight: 700;
 }
-th,td{
-  padding:10px;
-  border-bottom:1px solid var(--border);
-  text-align:right;
-  font-variant-numeric:tabular-nums;
-  vertical-align:middle;
-}
-th{
-  color:var(--muted);
-  background:var(--soft);
-  text-align:right
-}
-th:first-child,
-td:first-child{text-align:left}
-tfoot td{font-weight:700}
-tbody tr:nth-child(even){
-  background:#f9fafb;
-}
-table{
-  border-radius:12px;
-  overflow:hidden;
+.pill input {
+  accent-color: var(--text);
+  margin: 0;
+  transform: scale(1.1);
 }
 
-.muted{color:var(--muted)}
-.accent{color:var(--accent)}
-.ok{color:var(--ok)}
+/* Advanced Clean Data & Metrics Layout Table */
+#tableWrap {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 13px;
+}
+th, td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+th {
+  color: var(--muted);
+  background: #fafafa;
+  font-weight: 600;
+  text-align: right;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+th:first-child, td:first-child { text-align: left; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: #fafafa; }
 
-/* Summary & message */
-.msg{
-  white-space:pre-wrap;
-  background:#fff;
-  border:1px dashed var(--border);
-  border-radius:12px;
-  padding:14px;
-  min-height:160px;
-  margin-top:14px
+/* Financial Summary Display Card Styling */
+.summary-table {
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.summary-table td {
+  padding: 14px 18px;
+  font-size: 14px;
+}
+.summary-table tbody tr:nth-child(even) { background: transparent; }
+.num-bold {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 15px;
+}
+.discount-text {
+  color: #df2121;
+}
+.summary-table tfoot {
+  background: #111111;
+}
+.summary-table tfoot td {
+  color: #ffffff;
+  font-weight: 700;
+  padding: 16px 18px;
+}
+.grand-total-amount {
+  font-size: 22px !important;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--accent) !important; /* Premium Highlight Orange */
+}
+.muted { color: var(--muted); }
+
+/* Raw Message Box Preview Container */
+.msg {
+  white-space: pre-wrap;
+  background: #fdfdfd;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 180px;
+  margin-top: 6px;
+  margin-bottom: 20px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #222222;
+  line-height: 1.6;
 }
 
-/* Buttons: green primary */
-.btn{
-  background:var(--accent);
-  color:#ffffff;
-  border:none;
-  border-radius:12px;
-  padding:10px 14px;
-  font-weight:700;
-  cursor:pointer;
-  transition:filter .15s ease, transform .02s
+/* Master Typography & Functional Buttons Framework */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
 }
-.btn:hover{filter:brightness(0.95)}
-.btn:active{transform:translateY(1px)}
+.btn:active { transform: translateY(1px); }
 
-/* Secondary button */
-.btn-secondary{
-  background:var(--soft);
-  color:var(--text);
+/* Premium Color Variants for Utility Buttons */
+.btn-primary {
+  background: var(--text); /* Black Premium Business Theme Base button */
+  color: #ffffff;
 }
-.btn-secondary:hover{
-  filter:brightness(0.97);
+.btn-primary:hover { background: #333333; }
+
+.btn-secondary {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid #cbd5e1;
+}
+.btn-secondary:hover { background: #f8f9fa; border-color: #94a3b8; }
+
+.btn-line {
+  background: #ff6a00; /* Re-skinned from native green to match explicit UI Orange menu/button requests */
+  color: #ffffff;
+}
+.btn-line:hover { background: var(--accent-hover); }
+
+.btn-sync {
+  background: var(--text);
+  color: #ffffff;
+  height: 40px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.btn-sync:hover { background: #333333; }
+
+.btn-dark-action {
+  background: #111111;
+  color: #ffffff;
+  width: 100%;
+}
+.btn-dark-action:hover { background: #222222; }
+
+/* Grid layout for major action control buttons */
+.action-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.btn-line {
+  grid-column: span 2;
+  font-size: 14px;
+  padding: 14px;
 }
 
-.hint{
-  font-size:12px;
-  color:var(--muted)
+/* Google Sheets Sync integration layout block */
+.sync-container {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
 }
-.inline{
-  display:flex;
-  gap:10px;
-  align-items:center
+.sync-label {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 10px;
 }
-
-/* Better number input on iOS/Safari */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button{
-  -webkit-appearance:none;
-  margin:0;
+.sync-row {
+  display: flex;
 }
-input[type=number]{-moz-appearance:textfield}
-
-/* Focus styles for accessibility */
-:focus-visible{
-  outline:2px solid color-mix(in srgb, var(--accent) 70%, transparent);
-  outline-offset:2px;
-  border-radius:10px
+.sync-row input {
+  border-radius: var(--radius) 0 0 var(--radius);
+  border-right: none;
 }
 
-/* ---- e-Bill Modal ---- */
-.modal{
-  position:fixed;
-  inset:0;
-  display:none;
-  z-index:9999
+/* Logistics tracking module styling */
+.tracking-zone {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
 }
-.modal.open{display:block}
-.modal-backdrop{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  backdrop-filter:saturate(100%) blur(1.5px)
+.tracking-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.tracking-icon { font-size: 20px; }
+.tracking-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-/* Modal card: allow scroll, prevent overflow cut-off, limit height */
-.modal-card{
-  position:relative;
-  z-index:1;
-  max-width:640px;
-  margin:6vh auto;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.12);
-  overflow:auto;
-  max-height:88vh
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
 }
-@media (max-width:720px){
-  .modal-card{
-    margin:0;
-    min-height:100dvh;
-    border-radius:0;
+
+/* Modal Overlay & Responsive Frame Configuration */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 2000;
+}
+.modal.open { display: block; }
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+.modal-card {
+  position: relative;
+  z-index: 2001;
+  max-width: 580px;
+  margin: 8vh auto;
+  background: #ffffff;
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  overflow: hidden;
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 600px) {
+  .modal-card {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
   }
 }
-.modal-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:14px 16px;
-  border-bottom:1px solid var(--border-soft)
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
 }
-.modal-head h3{
-  margin:0;
-  font-size:18px;
-  font-weight:700
+.modal-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
 }
-.modal-close{
-  background:transparent;
-  border:0;
-  font-size:22px;
-  line-height:1;
-  cursor:pointer;
-  padding:6px 10px;
-  color:#64748b
+.modal-close {
+  background: transparent;
+  border: 0;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 0 4px;
 }
-.modal-body{
-  padding:16px 16px 24px
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
-.modal-actions{
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-  padding:12px 16px;
-  border-top:1px solid var(--border-soft)
-}
-
-/* Receipt layout */
-.receipt{
-  font-size:14px;
-  color:var(--text)
-}
-.receipt .meta{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  color:var(--muted);
-  font-size:12px;
-  margin-bottom:10px
-}
-.receipt h4{
-  margin:0 0 8px 0;
-  font-size:16px
-}
-.receipt table{
-  width:100%;
-  border-collapse:collapse
-}
-.receipt th,
-.receipt td{
-  padding:8px;
-  border-bottom:1px solid var(--border);
-  text-align:right;
-  font-variant-numeric:tabular-nums
-}
-.receipt th:first-child,
-.receipt td:first-child{text-align:left}
-.receipt tfoot td{font-weight:700}
-.receipt .grand{color:var(--accent)}
-
-/* Placeholder card for future pages */
-.placeholder-card{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-.placeholder-card h2{
-  margin:0 0 4px;
-  font-size:14px;
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
 }
 
-/* Mobile tweaks */
-@media (max-width:480px){
-  .wrap{
-    padding:12px;
-    padding-bottom:20px;
-  }
-  .card{
-    padding:12px;
-    margin-bottom:12px;
-  }
-  th,td{
-    padding:8px;
-    font-size:13px;
-  }
-  .title{
-    font-size:16px;
-  }
-  .kicker{
-    font-size:11px;
-  }
-}
-/* =========================================
-   🌙 ระบบ Dark Mode
-   ========================================= */
-body.dark-mode {
-  --bg: #111827;       /* สีพื้นหลังเว็บ (ดำเทา) */
-  --soft: #1f2937;     /* สีพื้นหลังกล่อง/การ์ด (เทาเข้ม) */
-  --text: #f9fafb;     /* สีตัวอักษร (ขาว) */
-  --muted: #9ca3af;    /* สีตัวอักษรรอง (เทาอ่อน) */
-  --border: #374151;   /* สีเส้นขอบ (เทากลาง) */
-}
-
-/* บังคับสีพื้นหลังให้เปลี่ยนตามตัวแปร */
-body.dark-mode {
-  background-color: var(--bg);
+/* Clean Professional Invoice Bill UI Template Render */
+.receipt {
+  font-size: 13px;
   color: var(--text);
 }
+.receipt .meta {
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+.receipt table {
+  border: 1px solid var(--border);
+}
+.receipt th { background: #fafafa; }
+.receipt .grand {
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 16px;
+}
 
-/* ปุ่มกดสลับโหมด */
-.theme-btn {
-  font-size: 20px;
-  cursor: pointer;
-  background: none;
+/* System Placeholder State Graphics */
+.placeholder-card {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--muted);
+}
+.placeholder-card h2 {
+  font-size: 18px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+/* Global Mobile Adaptability Overrides */
+@media (max-width: 480px) {
+  .wrap { padding: 14px; }
+  .card { padding: 16px; margin-bottom: 16px; }
+  .action-buttons-grid { grid-template-columns: 1fr; }
+  .top-nav { padding: 0 16px; }
+  .nav-title { font-size: 14px; }
+  .nav-subtitle { display: none; }
+  .nav-divider { display: none; }
+}
+
+/* =========================================
+   📱 Mobile Hamburger Menu
+========================================= */
+.menu-toggle {
+  display: none;
+  background: transparent;
   border: none;
-  padding: 0 10px;
-  transition: transform 0.2s;
-}
-.theme-btn:hover { transform: scale(1.1); }
-
-/* ⚠️ สำคัญ: คลาสไหนที่เคยตั้งสีขาวตายตัวไว้ ให้เปลี่ยนไปใช้ตัวแปร --soft */
-body.dark-mode .card,
-body.dark-mode .stat-card,
-body.dark-mode .modal-content,
-body.dark-mode header.top-nav {
-  background-color: var(--soft);
-  border-color: var(--border);
-}
-/* =========================================
-   🛠️ ไม้ตาย: ซ่อมสีกล่องและตารางที่ดื้อในโหมดมืด
-   ========================================= */
-
-/* 1. บังคับตารางทั้งหมดไม่ให้สลับสีขาว-ดำ */
-body.dark-mode table,
-body.dark-mode tbody tr,
-body.dark-mode tbody tr:nth-child(odd),
-body.dark-mode tbody tr:nth-child(even),
-body.dark-mode td,
-body.dark-mode th {
-  background-color: transparent !important;
-  color: var(--text) !important;
-  border-color: var(--border) !important;
-}
-
-/* 2. บังคับ Input ทุกตัวในตารางและในการ์ดให้มืดสนิท (แก้ช่องราคา/ช่องกรอกตัวเลขที่ขาวอยู่) */
-body.dark-mode input,
-body.dark-mode select,
-body.dark-mode textarea {
-  background-color: #111827 !important; /* ใช้สีดำเทา */
-  color: #f9fafb !important;            /* ข้อความสีขาว */
-  border: 1px solid #374151 !important; /* เส้นขอบสีเทาเข้ม */
-}
-
-/* ตอนคลิกพิมพ์ให้ขอบสว่างขึ้นนิดนึง */
-body.dark-mode input:focus,
-body.dark-mode select:focus,
-body.dark-mode textarea:focus {
-  border-color: #3b82f6 !important; 
-  outline: none !important;
-}
-
-/* 3. บังคับกล่อง Google Sheet (ที่ถูกฝังสีพื้นหลัง #f8f9fa ไว้ใน HTML) */
-body.dark-mode div[style*="background: #f8f9fa"],
-body.dark-mode div[style*="background:#f8f9fa"] {
-  background-color: #111827 !important;
-  border-color: #374151 !important;
-}
-
-/* 4. ปรับสีข้อความเล็กๆ (Hint) หรือคำอธิบายไม่ให้กลืนหาย */
-body.dark-mode .hint,
-body.dark-mode .muted,
-body.dark-mode label[style*="color: #333"] {
-  color: #9ca3af !important; /* เปลี่ยนเป็นสีเทาอ่อนให้มองเห็นในโหมดมืด */
-}
-
-/* 5. กล่องข้อความพร้อมคัดลอก */
-body.dark-mode .msg {
-  background-color: #111827 !important;
-  border-color: #374151 !important;
-}
-/* =========================================
-   💊 ซ่อมปุ่มวงรี (Pill) และปุ่มเลือก ในโหมดมืด
-   ========================================= */
-
-/* 1. บังคับพื้นหลังและสีตัวอักษรของปุ่มวงรีทั้งหมด */
-body.dark-mode .pill,
-body.dark-mode label.pill,
-body.dark-mode .inline label,
-body.dark-mode .inline span.pill {
-  background-color: #1f2937 !important; /* สีเทาเข้ม (soft) */
-  color: #f9fafb !important;            /* ตัวหนังสือขาว */
-  border: 1px solid #374151 !important; /* ขอบเทา */
-}
-
-/* 2. บังคับสีตัวอักษรข้างในปุ่ม (กรณีเป็นแท็ก span) */
-body.dark-mode .pill span,
-body.dark-mode label.pill span {
-  color: #f9fafb !important;
-}
-
-/* 3. จัดการตอนที่ "เลือก" (Checked) ให้สีเด่นขึ้นมาหน่อย */
-body.dark-mode .pill input:checked + span,
-body.dark-mode label.pill input:checked + span {
-  color: var(--accent) !important; /* ใช้สีหลักของเว็บคุณว๊าฟ */
-  font-weight: bold;
-}
-
-/* 4. ปรับสี Checkbox และ Radio พื้นฐานให้ดูง่ายขึ้น */
-body.dark-mode input[type="checkbox"],
-body.dark-mode input[type="radio"] {
-  filter: invert(1) hue-rotate(180deg); /* กลับสีตัวเลือกให้สว่างขึ้น */
   cursor: pointer;
+  padding: 4px;
 }
 
-/* 5. ซ่อมพื้นหลังสีขาวที่หลุดมาตรงปุ่มเลือกประเภท */
-body.dark-mode .inline {
-  background-color: transparent !important;
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block; 
+  }
+  .nav-tabs {
+    display: none; 
+    flex-direction: column;
+    position: absolute;
+    top: 60px; 
+    left: 0;
+    width: 100%;
+    height: auto; /* 🆕 แก้ปัญหาพื้นหลังไม่ยืดตามเมนู */
+    background: #111111;
+    border-top: 1px solid #222222;
+    padding: 0;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  }
+  .nav-tabs.open {
+    display: flex; 
+  }
+  .nav-tab {
+    height: auto; /* 🆕 ล้างค่าความสูงเดิมที่จำมาจาก Desktop */
+    padding: 16px 32px;
+    width: 100%;
+    border-bottom: 1px solid #222222;
+    justify-content: flex-start;
+  }
+  .nav-tab.active {
+    border-bottom: 1px solid #222222;
+    border-left: 4px solid var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+  }
 }

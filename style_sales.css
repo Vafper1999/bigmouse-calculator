@@ -1,651 +1,163 @@
 /* =========================================
    style_sales.css
-   สไตล์เฉพาะสำหรับหน้าบันทึกยอดขาย
+   สไตล์เฉพาะสำหรับหน้าบันทึกยอดขาย (Minimal Premium)
    ========================================= */
-
-/* --- ปุ่มตั้งค่า (รูปเฟือง) --- */
-.settings-btn {
-  font-size: 22px;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0 10px;
-  margin-right: -10px;
-  transition: transform 0.3s;
-  color: var(--text); /* เพิ่มสีให้ชัดเจน */
-}
-.settings-btn:hover {
-  transform: rotate(90deg);
-}
-
-/* --- Modal (หน้าต่างเด้ง) --- */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px); /* เพิ่มเบลอฉากหลัง */
-}
-.modal-content {
-  background-color: #fff;
-  margin: auto;
-  padding: 24px;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  animation: slideUp 0.3s ease-out; /* เปลี่ยนเป็น Slide Up สวยกว่า */
-}
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* --- รายการสินค้าในตะกร้า --- */
-.cart-list {
-  margin-top: 15px;
-  border-top: 1px dashed var(--border);
-  padding-top: 15px;
-}
-.cart-item {
-  background: var(--soft);
-  padding: 12px 14px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  position: relative;
-  border: 1px solid transparent;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.cart-item b { color: var(--text); font-size: 15px; }
-
-/* ปุ่มลบ (กากบาท) - ปรับให้กดง่ายบนมือถือ */
-.cart-del {
-  color: #ef4444; 
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 24px; /* ใหญ่ขึ้น */
-  width: 40px;     /* เพิ่มพื้นที่กด */
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  margin-right: -10px; /* ชดเชยพื้นที่ขวา */
-  transition: background 0.2s;
-}
-.cart-del:hover { background: #fee2e2; }
-
-/* --- กล่องสรุปยอดเงิน --- */
-.summary-box {
-  background: var(--bg);
-  border: 2px solid var(--accent);
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  margin-top: 25px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-.sum-title {
-  font-size: 13px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.sum-total {
-  font-size: 36px; /* ตัวเลขใหญ่สะใจ */
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
-}
 
 /* --- ปุ่ม Toggle Switch (ปลีก/ส่ง) --- */
 .price-mode {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
-  background: var(--soft);
-  padding: 5px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
-.price-mode label {
-  flex: 1;
-  text-align: center;
-  padding: 10px;
-  border-radius: 9px;
-  cursor: pointer;
-  margin: 0;
-  font-size: 15px;
-  color: var(--muted);
-  transition: all 0.2s;
-  font-weight: 600;
-}
-.price-mode input { display: none; }
-.price-mode input:checked + label {
-  background: #ffffff;
-  color: var(--accent);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  transform: scale(1.02);
-}
-
-/* --- Checkbox "สินค้าเป็น" (ปรับแต่งพิเศษ) --- */
-.live-check-row {
-    display: flex;
-    align-items: center;
-    margin-top: 12px;
-    margin-bottom: 12px;
-    padding: 10px;
-    background: #f0fdf4; /* เขียวอ่อน */
-    border-radius: 10px;
-    border: 1px solid #dcfce7;
-}
-
-/* แก้บั๊ก Checkbox กดไม่ได้ + ขยายขนาด */
-input[type="checkbox"], 
-input[type="radio"] {
-  appearance: auto !important;
-  width: 24px !important;  /* บังคับขนาดให้ใหญ่ */
-  height: 24px !important;
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  cursor: pointer;
-  margin-right: 8px;
-}
-
-/* ปรับ Label คู่กับ Checkbox */
-input[type="checkbox"] + label {
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-/* =========================================
-   4. ประวัติการขาย (Sales History)
-   ========================================= */
-
-/* --- Dropdown เลือกเดือน --- */
-#history-month-filter {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background-color: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s;
-}
-#history-month-filter:focus {
-  border-color: var(--accent);
-}
-
-/* --- ตารางประวัติการขาย --- */
-#sales-history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  min-width: 600px;
-}
-#sales-history-table thead {
-  background-color: var(--soft) !important;
-}
-#sales-history-table th {
-  padding: 12px 10px !important;
-  text-align: left;
-  font-weight: 600;
-  color: var(--muted);
-  border-bottom: 2px solid var(--border) !important;
-  white-space: nowrap;
-}
-#sales-history-table td {
-  padding: 7px 50px 8px 10px !important;
-  border-bottom: 1px solid var(--border) !important;
-  color: var(--text);
-  white-space: nowrap;
-}
-#sales-history-table tbody tr:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-/* --- สรุปยอดขายด้านล่าง --- */
-#history-summary {
-  margin-top: 15px;
-  padding: 12px 15px !important;
-  background: var(--soft) !important;
-  border-radius: 10px !important;
-  font-size: 14px;
-  font-weight: bold;
-  border: 1px dashed var(--border) !important;
-  color: var(--text);
-}
-#sum-monthly-price {
-  font-size: 18px;
-  color: var(--accent) !important;
-}
-/* =========================================
-   สไตล์ที่ย้ายมาจาก Inline HTML
-   ========================================= */
-.live-label {
-  margin: 0 0 0 10px;
-  font-size: 16px;
-  font-weight: bold;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-}
-.live-hint {
-  font-weight: normal;
-  color: gray;
-  font-size: 14px;
-  margin-left: 6px;
-}
-.prom-row {
-  background: #f9f9f9;
-  padding: 10px;
-  border-radius: 8px;
-  flex-wrap: wrap;
-}
-.prom-col { flex: 1 1 45%; }
-.disc-preview-box {
-  width: 100%;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px dashed #ccc;
-  text-align: right;
-  font-size: 14px;
-}
-.disc-preview-total {
-  color: #ef4444;
-  font-weight: bold;
-  font-size: 16px;
-}
-.add-cart-btn {
-  width: 100%;
-  margin-top: 10px;
-  background: var(--text);
-  color: white;
-}
-.history-card {
-  margin-top: 20px;
-  padding-bottom: 20px;
-}
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.month-filter {
-  width: auto;
-  padding: 5px 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-.history-table-wrapper {
-  overflow-x: auto;
-  margin-top: 15px;
-}
-.settings-desc {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 20px;
-}
-.settings-lbl {
-  font-size: 12px;
-  font-weight: bold;
-  display: block;
-  margin-bottom: 4px;
-}
-.settings-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  box-sizing: border-box;
-}
-.action-icon {
-  cursor: pointer;
-  font-size: 18px;
-  color: gray;
-  margin-left: 8px;
-  transition: transform 0.2s;
-}
-.action-icon:hover { transform: scale(1.2); }
-.edit-icon { font-size: 16px; }
-
-/* =========================================
-   style_sales.css (ฉบับปรับปรุง Dark Mode สมบูรณ์)
-   ========================================= */
-
-/* --- ปุ่มตั้งค่า (รูปเฟือง) --- */
-.settings-btn {
-  font-size: 22px;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0 10px;
-  margin-right: -10px;
-  transition: transform 0.3s;
-  color: var(--text);
-}
-.settings-btn:hover {
-  transform: rotate(90deg);
-}
-
-/* --- Modal (หน้าต่างเด้ง) --- */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-}
-.modal-content {
-  background-color: #fff;
-  margin: auto;
-  padding: 24px;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  animation: slideUp 0.3s ease-out;
-}
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* --- รายการสินค้าในตะกร้า --- */
-.cart-list {
-  margin-top: 15px;
-  border-top: 1px dashed var(--border);
-  padding-top: 15px;
-}
-.cart-item {
-  background: var(--soft);
-  padding: 12px 14px;
+  background: #f1f5f9;
+  padding: 6px;
   border-radius: 10px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  position: relative;
-  border: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.cart-item b { color: var(--text); font-size: 15px; }
-
-.cart-del {
-  color: #ef4444; 
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 24px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  margin-right: -10px;
-  transition: background 0.2s;
-}
-.cart-del:hover { background: rgba(239, 68, 68, 0.1); }
-
-/* --- กล่องสรุปยอดเงิน --- */
-.summary-box {
-  background: var(--bg);
-  border: 2px solid var(--accent);
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  margin-top: 25px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-.sum-title {
-  font-size: 13px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.sum-total {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
-}
-
-/* --- ปุ่ม Toggle Switch (ปลีก/ส่ง) --- */
-.price-mode {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  background: var(--soft);
-  padding: 5px;
-  border-radius: 12px;
   border: 1px solid var(--border);
 }
 .price-mode label {
   flex: 1;
   text-align: center;
   padding: 10px;
-  border-radius: 9px;
+  border-radius: 6px;
   cursor: pointer;
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--muted);
   transition: all 0.2s;
-  font-weight: 600;
+  font-weight: 700;
 }
 .price-mode input { display: none; }
 .price-mode input:checked + label {
   background: #ffffff;
-  color: var(--accent);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transform: scale(1.02);
+  color: var(--text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
 }
 
 /* --- Checkbox "สินค้าเป็น" --- */
 .live-check-row {
-    display: flex;
-    align-items: center;
-    margin-top: 12px;
-    margin-bottom: 12px;
-    padding: 10px;
-    background: #f0fdf4; /* เขียวอ่อน */
-    border-radius: 10px;
-    border: 1px solid #dcfce7;
+  display: flex;
+  align-items: center;
+  margin: 14px 0;
+  padding: 12px 16px;
+  background: #fdfdfd;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+  transition: all 0.2s ease;
 }
-
-input[type="checkbox"], 
-input[type="radio"] {
+.live-check-row:has(input:checked) {
+  background: #fffdf5; /* พื้นหลังนวลขึ้นเมื่อเลือก */
+  border-color: var(--accent); /* ขอบสีส้ม */
+}
+input[type="checkbox"], input[type="radio"] {
   appearance: auto !important;
-  width: 20px !important;
+  width: 20px !important; 
   height: 20px !important;
   cursor: pointer;
+  margin-right: 10px;
+  accent-color: var(--accent);
 }
-
-/* =========================================
-   4. ประวัติการขาย & ส่วนอื่นๆ
-   ========================================= */
-#history-month-filter {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background-color: var(--bg);
-  color: var(--text);
+.live-label {
+  margin: 0;
   font-size: 14px;
-  outline: none;
-}
-
-#sales-history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-#sales-history-table th {
-  padding: 12px 10px;
-  text-align: left;
-  background-color: var(--soft);
-  color: var(--muted);
-  border-bottom: 2px solid var(--border);
-}
-#sales-history-table td {
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
+  font-weight: 700;
   color: var(--text);
-}
-
-.prom-row {
-  background: #f9f9f9;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-
-/* =========================================
-   🌙 ระบบ DARK MODE (บังคับใช้)
-   ========================================= */
-body.dark-mode {
-  --bg: #111827;
-  --soft: #1f2937;
-  --text: #f9fafb;
-  --muted: #9ca3af;
-  --border: #374151;
-  background-color: var(--bg);
-  color: var(--text);
-}
-
-body.dark-mode .card, 
-body.dark-mode .modal-content,
-body.dark-mode header.top-nav {
-  background-color: var(--soft) !important;
-  border-color: var(--border) !important;
-}
-
-/* ซ่อมกล่อง Live ในโหมดมืด */
-body.dark-mode .live-check-row {
-  background: #064e3b !important; /* เขียวเข้ม */
-  border-color: #065f46 !important;
-}
-body.dark-mode .live-label, body.dark-mode .live-hint {
-  color: #d1fae5 !important; /* ตัวหนังสือเขียวสว่างอ่านง่าย */
-}
-
-/* ซ่อมกล่องส่วนลดในโหมดมืด */
-body.dark-mode .prom-row {
-  background: #111827 !important;
-  border: 1px solid var(--border);
-}
-
-/* ซ่อมปุ่ม Toggle ปลีก/ส่ง ในโหมดมืด */
-body.dark-mode .price-mode input:checked + label {
-  background: var(--accent) !important;
-  color: #ffffff !important;
-}
-
-/* บังคับ Input ทุกตัวในโหมดมืด */
-body.dark-mode input, 
-body.dark-mode select, 
-body.dark-mode textarea {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
-  border: 1px solid var(--border) !important;
-}
-
-/* บังคับตารางประวัติ */
-body.dark-mode #sales-history-table th {
-  background-color: #111827 !important;
-}
-body.dark-mode #sales-history-table tr:hover {
-  background-color: rgba(255,255,255,0.05);
-}
-
-/* ซ่อมตัวหนังสือ Label ต่างๆ */
-body.dark-mode label {
-  color: var(--text) !important;
-}
-body.dark-mode .hint, body.dark-mode .muted {
-  color: var(--muted) !important;
-}
-/* =========================================
-   🚀 ซ่อมปุ่ม "เพิ่มลงรายการ" ให้โดดเด่นไม่จม
-   ========================================= */
-
-/* ปรับสไตล์ปุ่มเพิ่มลงรายการในโหมดมืด */
-body.dark-mode .add-cart-btn {
-  background-color: var(--accent) !important; /* ใช้สีหลักของเว็บ (สีเขียว/ฟ้า) */
-  color: #ffffff !important;                   /* ตัวหนังสือสีขาวชัดเจน */
-  border: none !important;
-  padding: 14px !important;                    /* เพิ่มความหนาให้กดง่าย */
-  font-weight: 800 !important;
-  font-size: 16px !important;
-  border-radius: 12px !important;
+  display: flex;
+  align-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important; /* เพิ่มเงาให้ดูมีมิติ ไม่จม */
-  display: block;
-  width: 100%;
+}
+.live-hint {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 13px;
+  margin-left: 6px;
 }
 
-/* เอฟเฟกต์ตอนเอาเมาส์วาง (Hover) */
-body.dark-mode .add-cart-btn:hover {
-  filter: brightness(1.1);                     /* สว่างขึ้นนิดหน่อย */
-  transform: translateY(-2px);                 /* ลอยขึ้นนิดนึงให้รู้ว่ากดได้ */
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+/* --- รายการสินค้าในตะกร้า --- */
+.cart-list { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
+.cart-item {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.cart-item b { color: var(--text); font-size: 15px; }
+.cart-del {
+  color: #ef4444; 
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 22px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+  background: #fef2f2;
+}
+.cart-del:hover { background: #fee2e2; transform: scale(1.05); }
+
+/* --- กล่องสรุปยอดเงิน --- */
+.summary-box {
+  background: #ffffff;
+  border: 2px solid var(--text); /* ขอบดำให้ดูแพง */
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin-top: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+.sum-title {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.sum-total {
+  font-size: 44px; 
+  font-weight: 800;
+  color: var(--accent); /* สีส้ม */
+  line-height: 1;
 }
 
-/* เอฟเฟกต์ตอนกด (Active) */
-body.dark-mode .add-cart-btn:active {
-  transform: translateY(0);                    /* ยุบลงไปเหมือนกดปุ่มจริง */
-}
+/* --- ประวัติการขาย --- */
+#history-month-filter { padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 13px; }
+.history-table-wrapper { overflow-x: auto; margin-top: 15px; border: 1px solid var(--border); border-radius: 8px; }
+#sales-history-table th { background: #fafafa !important; text-transform: uppercase; font-size: 12px; letter-spacing: 0.02em; }
+#sales-history-table td { padding: 12px 10px !important; }
 
-/* =========================================
-   📊 ซ่อมสีตัวเลขสรุปยอดขาย (ให้ออกสีแดง/ส้มสว่าง)
-   ========================================= */
-
-/* เน้นตัวเลขยอดขายรวมให้เป็นสีแดงสว่าง (เพื่อให้เห็นชัดในโหมดมืด) */
-body.dark-mode #sum-monthly-price {
-  color: #ff4d4d !important; /* สีแดงสว่าง */
-  font-weight: 800 !important;
-  text-shadow: 0 0 5px rgba(255, 77, 77, 0.2); /* เพิ่มเรืองแสงนิดๆ ให้ดูมีมิติ */
+#history-summary {
+  margin-top: 16px;
+  padding: 16px !important;
+  background: #fafafa !important;
+  border-radius: 10px !important;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid var(--border) !important;
+  text-align: center;
 }
+#sum-monthly-price { font-size: 20px; color: var(--accent) !important; }
+#sum-monthly-ship { font-size: 16px; color: var(--text) !important; }
 
-/* ส่วนของกำไรค่าส่ง ถ้าติดลบให้เป็นสีแดง ถ้าเป็นบวกให้เป็นสีเขียวสว่าง */
-body.dark-mode #history-summary b,
-body.dark-mode #history-summary span {
-  color: #fc1414 !important; /* สีขาวปกติสำหรับตัวหนังสือ */
-}
+/* --- Utilities Layouts --- */
+.prom-row { background: #fafafa; padding: 16px; border-radius: 8px; border: 1px dashed var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+@media (max-width: 480px) { .prom-row { grid-template-columns: 1fr; } }
+.prom-col { min-width: 0; }
+.disc-preview-box { grid-column: 1 / -1; margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--border); text-align: right; font-size: 13px; }
+.disc-preview-total { color: var(--accent); font-weight: 800; font-size: 16px; }
 
-/* กรณีต้องการให้ตัวเลขกำไร/ขาดทุนเปลี่ยนสีอัตโนมัติ (ถ้ามี class เจาะจง) */
-body.dark-mode .profit-negative {
-  color: #ff4d4d !important;
-}
+.add-cart-btn { width: 100%; margin-top: 16px; background: #ffffff; color: var(--text); border: 1px solid var(--text); border-radius: 8px; }
+.add-cart-btn:hover { background: #f8f9fa; transform: none; }
 
-body.dark-mode .profit-positive {
-  color: #4ade80 !important; /* สีเขียวสว่าง */
-}
-
-body.dark-mode .sum-total {
-  color: #ffffff !important; /* สีเขียวสว่าง */
-}
+.history-card { margin-top: 24px; }
+.history-header { display: flex; justify-content: space-between; align-items: center; }
+.action-icon { cursor: pointer; font-size: 16px; color: var(--muted); margin-left: 8px; transition: transform 0.2s; }
+.action-icon:hover { transform: scale(1.2); color: var(--text); }

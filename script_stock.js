@@ -6,8 +6,8 @@ const RAT_SIZES  = ['S','M1','M2','M3','L1','L2','XL','2XL','3XL','4XL','5XL','J
 const $ = (sel) => document.querySelector(sel);
 
 // --- Settings ---
-function openSettings() { $('#settings-modal').style.display = 'flex'; }
-function closeSettings() { $('#settings-modal').style.display = 'none'; }
+function openSettings() { $('#settings-modal').classList.add('open'); }
+function closeSettings() { $('#settings-modal').classList.remove('open'); }
 
 async function saveSettings() {
   const url = $('#sheet-url-input').value;
@@ -61,9 +61,9 @@ function renderStockTables(rows) {
   sorted.forEach(row => {
     const animal = (row.animal||'').toLowerCase();
     const stockVal = parseInt(row.stock);
-    let style = (isNaN(stockVal)||stockVal<=0) ? 'color:red;font-weight:bold;' : (stockVal<5?'color:orange;':'');
+    let style = (isNaN(stockVal)||stockVal<=0) ? 'color:#df2121;font-weight:700;' : (stockVal<5?'color:#ff6a00;font-weight:700;':'font-weight:600;');
     
-    const tr = `<tr><td>${row.size}</td><td style="${style}">${row.stock}</td></tr>`;
+    const tr = `<tr><td style="font-weight:600;">${row.size}</td><td style="${style}">${row.stock}</td></tr>`;
     if(animal==='mice'){ miceBody.innerHTML+=tr; m++; }
     else if(animal==='rat'){ ratBody.innerHTML+=tr; r++; }
   });
@@ -75,8 +75,9 @@ function renderStockTables(rows) {
 async function loadStockTable() {
   try {
     if($('#stock-table-mice tbody').children.length === 0) 
-       $('#stock-table-mice tbody').innerHTML = '<tr><td colspan="2" class="hint">...</td></tr>';
-    
+       $('#stock-table-mice tbody').innerHTML = '<tr><td colspan="2" class="hint" style="text-align:center">กำลังโหลดข้อมูล...</td></tr>';
+       $('#stock-table-rat tbody').innerHTML = '<tr><td colspan="2" class="hint" style="text-align:center">กำลังโหลดข้อมูล...</td></tr>';
+       
     const res = await fetch(`${SCRIPT_URL}?action=getStock`);
     const data = await res.json();
     
@@ -92,11 +93,11 @@ async function submitStockUpdate() {
   const size = $('#upd-size').value;
   const qty = parseInt($('#upd-qty').value);
 
-  if (!date || !animal || !size || !qty) return alert('กรอกข้อมูลไม่ครบ');
+  if (!date || !animal || !size || !qty) return alert('กรอกข้อมูลไม่ครบถ้วน');
 
   const btn = $('#btn-submit');
   btn.disabled = true;
-  btn.innerText = '⏳...';
+  btn.innerText = 'กำลังบันทึก...';
 
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -113,13 +114,13 @@ async function submitStockUpdate() {
     
     const result = await res.json();
     if (result.status === 'success') {
-      alert('✅ เติมสต็อกเรียบร้อย!');
+      alert('✅ บันทึกการเติมสต็อกเรียบร้อย');
       $('#upd-qty').value = ''; 
       await loadStockTable(); 
     } else {
       throw new Error(result.message);
     }
-  } catch (e) { alert('❌ Error: ' + e.message); } 
+  } catch (e) { alert('❌ เกิดข้อผิดพลาด: ' + e.message); } 
   finally { btn.disabled = false; btn.innerText = 'บันทึกการเติมสต็อก'; }
 }
 
@@ -132,31 +133,15 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#btn-submit').addEventListener('click', submitStockUpdate);
   loadStockTable();
 });
-// ==========================================
-// 🌙 ระบบ Dark Mode
-// ==========================================
-function toggleTheme() {
-  const body = document.body;
-  const btn = document.getElementById('theme-toggle');
-  
-  // สลับคลาส dark-mode
-  body.classList.toggle('dark-mode');
-  
-  // เปลี่ยนไอคอนและจำค่าลงเครื่อง (localStorage)
-  if (body.classList.contains('dark-mode')) {
-    btn.textContent = '☀️';
-    localStorage.setItem('theme', 'dark');
-  } else {
-    btn.textContent = '🌙';
-    localStorage.setItem('theme', 'light');
-  }
-}
 
-// 🌟 ให้โหลดค่าเดิมตอนเปิดหน้าเว็บมาใหม่
-window.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark-mode');
-    const btn = document.getElementById('theme-toggle');
-    if(btn) btn.textContent = '☀️';
-  }
-});
+// ============================================================
+// 📱 Mobile Hamburger Menu Toggle
+// ============================================================
+const menuToggle = document.getElementById('menuToggle');
+const navTabs = document.getElementById('navTabs');
+
+if (menuToggle && navTabs) {
+  menuToggle.addEventListener('click', () => {
+    navTabs.classList.toggle('open');
+  });
+}

@@ -5,30 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Big Mouse • สต็อกสินค้า</title>
   <link rel="stylesheet" href="style_stock.css" />
-  <link rel="stylesheet" href="style_sales.css" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon D1.ico">
 </head>
-<header class="top-nav">
-  <div class="nav-title">🐭 Big Mouse • Backoffice</div>
-  
-  <button class="settings-btn" onclick="openSettings()">⚙️</button>
-  <button id="theme-toggle" class="theme-btn" onclick="toggleTheme()">🌙</button>
-  
-  <nav class="nav-tabs">
-    <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
-    <span class="nav-tab active">Stock</span>
-    <a href="sales.html" class="nav-tab" style="text-decoration:none;">Sales</a>
-    <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
-  </nav>
-</header>
 <body>
-  <div class="wrap">
+    <header class="top-nav">
+    <div class="nav-title">🐭 Big Mouse <span class="nav-divider">|</span> <span class="nav-subtitle">Backoffice</span></div>
     
-    <div class="title">📦 เช็ค / เติม สต็อกสินค้า</div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      
+      <nav class="nav-tabs" id="navTabs">
+        <a href="index.html" class="nav-tab" style="text-decoration:none;">Pricing</a>
+        <button class="nav-tab active" data-page="stock">Stock</button>
+        <a href="sales.html" class="nav-tab" style="text-decoration:none;">Sales</a>
+        <a href="orders.html" class="nav-tab" style="text-decoration:none;">Purchases</a>
+      </nav>
+
+      <button class="settings-btn" onclick="openSettings()" aria-label="Settings">⚙️</button>
+      
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+        <svg viewBox="0 0 24 24" width="28" height="28" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="title">STOCK</div>
 
     <section class="card update-card">
       <div class="head"><h2>เติมสต็อกสินค้า</h2></div>
-      <div class="row">
+      <div class="row-grid">
         <div class="col">
           <label>วันที่เติมของ</label>
           <input type="date" id="upd-date">
@@ -48,51 +58,57 @@
           </select>
         </div>
       </div>
-      <div class="row">
+      <div class="row-grid" style="margin-top: 14px;">
         <div class="col">
           <label>จำนวนที่เติม (ตัว)</label>
           <input type="number" id="upd-qty" placeholder="ระบุจำนวนที่เติม" inputmode="numeric">
         </div>
       </div>
-      <button class="btn" id="btn-submit" style="width:100%; margin-top:12px;">
+      <button class="btn btn-primary" id="btn-submit" style="width:100%; margin-top:16px;">
         บันทึกการเติมสต็อก
       </button>
     </section>
 
     <div class="grid">
       <section class="card">
-        <div class="head"><h2>สต็อก Mice</h2></div>
+        <div class="head"><h2>Mice Stock</h2></div>
         <div class="stock-table-wrap">
           <table id="stock-table-mice">
             <thead><tr><th>ไซส์</th><th>Stock</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
-        <p class="hint" style="margin-top:8px">* ข้อมูลจาก Tab: M Stock</p>
+        <p class="hint" style="margin-top:10px">* ดึงข้อมูลเรียลไทม์จาก Tab: M Stock</p>
       </section>
 
       <section class="card">
-        <div class="head"><h2>สต็อก Rat</h2></div>
+        <div class="head"><h2>Rat Stock</h2></div>
         <div class="stock-table-wrap">
           <table id="stock-table-rat">
             <thead><tr><th>ไซส์</th><th>Stock</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
-        <p class="hint" style="margin-top:8px">* ข้อมูลจาก Tab: R Stock</p>
+        <p class="hint" style="margin-top:10px">* ดึงข้อมูลเรียลไทม์จาก Tab: R Stock</p>
       </section>
     </div>
   </div>
 
   <div id="settings-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeSettings()"></div>
     <div class="modal-content">
-      <h3 style="margin-top:0;">⚙️ ตั้งค่าไฟล์ Stock</h3>
-      <p style="font-size:14px; color:#666;">แปะลิงก์ Google Sheet ที่มี Tab "M Stock" และ "R Stock"</p>
-      <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Google Sheet URL:</label>
-      <input type="text" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:15px;">
-      <div style="display:flex; gap:10px;">
-        <button class="btn" onclick="saveSettings()" style="flex:1;">บันทึก</button>
-        <button class="btn" onclick="closeSettings()" style="flex:1; background:#ccc; color:#333;">ปิด</button>
+      <div class="modal-head">
+        <h3>⚙️ ตั้งค่าไฟล์ฐานข้อมูล (Stock)</h3>
+        <button class="modal-close" onclick="closeSettings()">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">กรุณาวางลิงก์ Google Sheet ที่มี Tab "M Stock" และ "R Stock"</p>
+        <label>Google Sheet URL:</label>
+        <input type="text" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeSettings()">ปิด</button>
+        <button class="btn btn-primary" onclick="saveSettings()">บันทึก</button>
       </div>
     </div>
   </div>

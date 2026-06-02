@@ -24,7 +24,7 @@ function calculateTotal() {
   // สูตรใหม่: (ราคา x จำนวน) + ค่าส่ง - ส่วนลด
   const total = (price * qty) + shipping - discount;
   
-  $('total-display').textContent = total.toLocaleString();
+  $('total-display').textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 async function loadDashboard() {
@@ -33,7 +33,7 @@ async function loadDashboard() {
 
   $('dash-sales').innerText = '...';
   $('dash-expenses').innerText = '...';
-  $('order-table').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">กำลังโหลด...</td></tr>';
+  $('order-table').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted);">กำลังโหลดข้อมูล...</td></tr>';
 
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -46,24 +46,23 @@ async function loadDashboard() {
     
     if (result.status === 'success') {
       const sum = result.summary;
-      $('dash-sales').innerText = parseFloat(sum.sales).toLocaleString();
-      $('dash-expenses').innerText = parseFloat(sum.expenses).toLocaleString();
+      $('dash-sales').innerText = parseFloat(sum.sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      $('dash-expenses').innerText = parseFloat(sum.expenses).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       
       const profit = parseFloat(sum.profit);
       const profitEl = $('dash-profit');
-      profitEl.innerText = profit.toLocaleString();
+      profitEl.innerText = profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       profitEl.style.color = profit >= 0 ? '#3b82f6' : '#ef4444';
 
-      $('dash-balance').innerText = parseFloat(sum.balance).toLocaleString();
+      $('dash-balance').innerText = parseFloat(sum.balance).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       
-      // 🌟 อัปเดตยอดแยกกระเป๋าเงินสด / บัญชี
-      if ($('dash-cash')) $('dash-cash').innerText = parseFloat(sum.cash || 0).toLocaleString();
-      if ($('dash-digital')) $('dash-digital').innerText = parseFloat(sum.digital || 0).toLocaleString();
+      if ($('dash-cash')) $('dash-cash').innerText = parseFloat(sum.cash || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+      if ($('dash-digital')) $('dash-digital').innerText = parseFloat(sum.digital || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
 
       const tbody = $('order-table').querySelector('tbody');
       tbody.innerHTML = '';
       if (result.orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:gray;">ไม่มีรายการ</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted);">ไม่มีรายการรายจ่ายในเดือนนี้</td></tr>';
       } else {
         result.orders.forEach(o => {
           let d = new Date(o.date);
@@ -71,20 +70,17 @@ async function loadDashboard() {
           let dStr = d.getDate() + '/' + (d.getMonth()+1);
           
           let tr = document.createElement('tr');
-          
-          // 🌟 ดึงเดือน/ปี ปัจจุบัน เพื่อส่งไปให้หลังบ้านรู้ว่าลบหน้าไหน
           const monthParam = date.split('-')[0] + '-' + date.split('-')[1];
 
-          // 🌟 ใส่ปุ่มลบต่อท้ายรายการ
           tr.innerHTML = `
             <td>${dStr}</td>
             <td>
-              <div style="font-weight:bold; color:#111827;">${o.item}</div>
-              <div style="font-size:11px; color:#6b7280;">${o.supplier || '-'}</div>
+              <div style="font-weight:700; color:var(--text);">${o.item}</div>
+              <div style="font-size:11px; color:var(--muted);">${o.supplier || '-'}</div>
             </td>
-            <td style="text-align:right; font-weight:bold;">${parseFloat(o.total).toLocaleString()}</td>
+            <td style="text-align:right; font-weight:800; color:var(--text);">${parseFloat(o.total).toLocaleString()}</td>
             <td style="text-align:center;">
-                <span style="cursor:pointer; font-size:18px; color:gray;" onclick="deleteOrder(${o.row}, '${monthParam}')" title="ลบรายการนี้">🗑️</span>
+                <span style="cursor:pointer; font-size:18px; color:var(--muted); transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--muted)'" onclick="deleteOrder(${o.row}, '${monthParam}')" title="ลบรายการนี้">🗑️</span>
             </td>
           `;
           tbody.appendChild(tr);
@@ -106,7 +102,7 @@ async function submitOrder() {
   const payType = $('order-pay-type') ? $('order-pay-type').value : "";
 
   if (!date || !item || !price || !qty) {
-      if (typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
+      if (typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
       else alert('กรุณากรอกข้อมูลให้ครบ');
       return;
   }
@@ -128,13 +124,13 @@ async function submitOrder() {
 
     const result = await res.json();
     if (result.status === 'success') {
-      if (typeof Swal !== 'undefined') Swal.fire({ icon: 'success', title: '✅ บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false });
+      if (typeof Swal !== 'undefined') Swal.fire({ icon: 'success', title: '✅ บันทึกรายจ่ายสำเร็จ!', timer: 1500, showConfirmButton: false });
       else alert('✅ บันทึกสำเร็จ!');
       
       $('order-item').value = ''; $('order-price').value = ''; 
       $('order-qty').value = '1'; $('order-shipping').value = ''; 
       $('order-discount').value = ''; 
-      $('order-note').value = ''; calculateTotal();
+      $('order-supplier').value = ''; $('order-note').value = ''; calculateTotal();
       loadDashboard(); 
     } else {
       if (typeof Swal !== 'undefined') Swal.fire('Error', result.message, 'error');
@@ -147,9 +143,6 @@ async function submitOrder() {
   finally { btn.disabled = false; btn.innerText = oldTxt; }
 }
 
-// ============================================================
-// 🌟 ฟังก์ชันใหม่: ลบรายการ (พร้อมคืนเงินเข้ากระเป๋าอัตโนมัติ)
-// ============================================================
 async function deleteOrder(row, monthParam) {
     if (typeof Swal === 'undefined') {
         if(!confirm("ยืนยันการลบรายการ? ยอดเงินจะถูกดึงกลับเข้ากระเป๋าอัตโนมัติ")) return;
@@ -181,7 +174,7 @@ async function executeDelete(row, monthParam) {
         if (result.status === 'success') {
             if (typeof Swal !== 'undefined') Swal.fire('สำเร็จ!', result.message, 'success');
             else alert('สำเร็จ: ' + result.message);
-            loadDashboard(); // 🌟 รีโหลดเพื่อให้ยอดเงินเด้งกลับทันที
+            loadDashboard(); 
         } else {
             throw new Error(result.message);
         }
@@ -191,17 +184,13 @@ async function executeDelete(row, monthParam) {
     }
 }
 
-
-// ==========================================
-// 🌟 ฟังก์ชันจัดการปุ่ม "โยกเงิน" (Transfers)
-// ==========================================
 function openTransferModal() { 
-  $('transfer-modal').style.display = 'flex'; 
+  $('transfer-modal').classList.add('open'); 
   if (!$('transfer-date').value) $('transfer-date').value = new Date().toISOString().split('T')[0];
 }
 
 function closeTransferModal() { 
-  $('transfer-modal').style.display = 'none'; 
+  $('transfer-modal').classList.remove('open'); 
 }
 
 async function submitTransfer() {
@@ -233,7 +222,7 @@ async function submitTransfer() {
       
       $('transfer-amount').value = ''; $('transfer-note').value = '';
       closeTransferModal();
-      loadDashboard(); // รีเฟรชยอดเงินให้ด้วย
+      loadDashboard(); 
     } else throw new Error(result.message);
   } catch(e) { 
       if (typeof Swal !== 'undefined') Swal.fire('Error', e.message, 'error');
@@ -242,12 +231,16 @@ async function submitTransfer() {
   finally { btn.disabled = false; btn.innerText = oldTxt; }
 }
 
-function openSettings() { $('settings-modal').style.display = 'flex'; }
-function closeSettings() { $('settings-modal').style.display = 'none'; }
+function openSettings() { $('settings-modal').classList.add('open'); }
+function closeSettings() { $('settings-modal').classList.remove('open'); }
 async function saveSettings() {
   const url = $('sheet-url-input').value;
-  if (!url) return alert('Link?');
-  const btn = event.target; btn.innerText='...';
+  if (!url) {
+      if (typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', 'กรุณาวางลิงก์ Google Sheet', 'warning');
+      else alert('กรุณาวางลิงก์');
+      return;
+  }
+  const btn = event.target; btn.innerText='กำลังบันทึก...'; btn.disabled = true;
   try {
       const res = await fetch(SCRIPT_URL, {
       method: 'POST',
@@ -256,43 +249,27 @@ async function saveSettings() {
     });
     const r = await res.json();
     if(r.status==='success') { 
-        if (typeof Swal !== 'undefined') Swal.fire('สำเร็จ', 'Update Sheet เรียบร้อย', 'success');
-        else alert('Update Sheet เรียบร้อย');
+        if (typeof Swal !== 'undefined') Swal.fire('สำเร็จ', 'อัปเดตไฟล์ฐานข้อมูลเรียบร้อย', 'success');
+        else alert('อัปเดตไฟล์เรียบร้อย');
         closeSettings(); loadDashboard(); 
     }
   } catch(e){ 
       if (typeof Swal !== 'undefined') Swal.fire('Error', e.message, 'error');
       else alert(e); 
   }
-  btn.innerText='บันทึก';
+  btn.innerText='บันทึกข้อมูล'; btn.disabled = false;
 }
 
 window.addEventListener('DOMContentLoaded', init);
-// ==========================================
-// 🌙 ระบบ Dark Mode
-// ==========================================
-function toggleTheme() {
-  const body = document.body;
-  const btn = document.getElementById('theme-toggle');
-  
-  // สลับคลาส dark-mode
-  body.classList.toggle('dark-mode');
-  
-  // เปลี่ยนไอคอนและจำค่าลงเครื่อง (localStorage)
-  if (body.classList.contains('dark-mode')) {
-    btn.textContent = '☀️';
-    localStorage.setItem('theme', 'dark');
-  } else {
-    btn.textContent = '🌙';
-    localStorage.setItem('theme', 'light');
-  }
-}
 
-// 🌟 ให้โหลดค่าเดิมตอนเปิดหน้าเว็บมาใหม่
-window.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark-mode');
-    const btn = document.getElementById('theme-toggle');
-    if(btn) btn.textContent = '☀️';
-  }
-});
+// ============================================================
+// 📱 Mobile Hamburger Menu Toggle
+// ============================================================
+const menuToggle = document.getElementById('menuToggle');
+const navTabs = document.getElementById('navTabs');
+
+if (menuToggle && navTabs) {
+  menuToggle.addEventListener('click', () => {
+    navTabs.classList.toggle('open');
+  });
+}

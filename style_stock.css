@@ -1,359 +1,292 @@
-:root{
-  --bg:#ffffff;
-  --card:#ffffff;
-  --soft:#f3f4f6;
-  --accent:#353535;
-  --text:#111827;
-  --muted:#6b7280;
-  --border:#e5e7eb;
-  --border-soft:#eceff1;
-  --radius:16px;
+:root {
+  /* Minimal Business Premium Palette */
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --text: #111111;
+  --muted: #666666;
+  --accent: #ff6a00;
+  --border: #e2e8f0;
+  --border-focus: #111111;
+  --radius: 8px;
+  --input-bg: #ffffff;
 }
 
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-  background:var(--soft);
-  color:var(--text);
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
-.wrap{
-  max-width:1000px;
-  margin:auto;
-  padding:clamp(14px,3vw,24px);
-  padding-bottom:24px;
-  min-height:100vh;
+.wrap {
+  max-width: 1200px;
+  margin: auto;
+  padding: 24px;
+  min-height: calc(100vh - 60px);
 }
-.title{
-  font-weight:700;
-  font-size:clamp(18px,2.2vw,22px);
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin:4px 0 20px;
-}
-.kicker{
-  font-size:12px;
-  color:var(--muted);
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  margin:0 0 10px;
+.title {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text);
+  margin: 10px 0 24px 0;
+  letter-spacing: -0.02em;
 }
 
-/* Top Nav */
-.top-nav{
-  position:sticky;
-  top:0;
-  z-index:50;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:8px clamp(35px,3vw,24px);
-  margin:0 calc(-1 * clamp(14px,3vw,24px)) 10px;
-  background:var(--bg);
-  border-bottom:1px solid var(--border-soft);
-  overflow-x:auto;
+/* Enterprise Top Navigation Layout Header */
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 60px;
+  background: #111111;
+  color: #ffffff;
+  border-bottom: 1px solid #222222;
 }
-.nav-title{
-  font-weight:700;
-  font-size:14px;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  white-space:nowrap;
+.nav-title {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
 }
-.nav-tabs{display:flex; gap:8px;}
-.nav-tab{
-  border-radius:999px;
-  padding:8px 14px;
-  font-size:13px;
-  border:1px solid transparent;
-  background:transparent;
-  color:var(--muted);
-  white-space:nowrap;
-  cursor:pointer;
+.nav-divider { color: #444444; margin: 0 10px; font-weight: 300; }
+.nav-subtitle {
+  color: #aaaaaa; font-size: 13px; font-weight: 400; letter-spacing: 0.05em; text-transform: uppercase;
 }
-.nav-tab.active{
-  background:var(--soft);
-  border-color:var(--border);
-  color:var(--text);
-}
-
-/* Settings Button & Modal */
-.settings-btn {
-  font-size: 22px;
-  cursor: pointer;
-  background: none;
+.nav-tabs { display: flex; height: 100%; }
+.nav-tab {
+  height: 100%;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: #aaaaaa;
   border: none;
-  padding: 0 10px;
-  margin-right: -10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+.nav-tab:hover { color: #ffffff; }
+.nav-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Hamburger Menu & Settings */
+.settings-btn {
+  font-size: 20px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 4px;
   transition: transform 0.3s;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
 }
 .settings-btn:hover { transform: rotate(90deg); }
 
-.modal {
+.menu-toggle {
   display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-  align-items: center;
-  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
 }
-.modal-content {
-  background-color: #fff;
-  margin: auto;
+
+/* Grid & Cards */
+.grid {
+  display: grid;
+  gap: 24px;
+}
+@media(min-width: 768px){ .grid { grid-template-columns: 1fr 1fr; } }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 24px;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  margin-bottom: 24px;
+}
+.update-card { border-left: 4px solid var(--accent); }
+
+.head {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+.head h2 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
-/* Grid & Card */
-.grid{
-  display:grid;
-  gap:16px;
+/* Forms */
+.row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
 }
-@media(min-width:768px){
-  .grid{grid-template-columns:1fr 1fr;}
+label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px 16px;
-  box-shadow:0 1px 3px rgba(0,0,0,.06);
-  margin-bottom:16px;
+select, input {
+  background: var(--input-bg);
+  border: 1px solid #cbd5e1;
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  transition: all 0.15s ease;
 }
-.update-card {
-  border-left: 5px solid var(--accent);
-}
-.head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:12px;
-}
-.head h2{
-  font-size:clamp(15px,2.2vw,18px);
-  margin:0;
-  font-weight:700;
-}
-
-/* Form */
-.row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  margin:10px 0;
-}
-.col {
-  flex: 1;
-  min-width: 130px;
-}
-label{
-  font-size:12px;
-  color:var(--muted);
-  display:block;
-  margin:0 0 6px;
-}
-select, input{
-  background:#fff;
-  border:1px solid var(--border);
-  color:var(--text);
-  border-radius:10px;
-  padding:12px 12px;
-  font-size:16px;
-  outline:none;
-  width:100%;
-  appearance: none;
-}
-select:focus, input:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+select:focus, input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.05);
 }
 
 /* Buttons */
-.btn{
-  min-height:44px;
-  background:var(--accent);
-  color:#ffffff;
-  border:none;
-  border-radius:12px;
-  padding:10px 14px;
-  font-weight:700;
-  cursor:pointer;
-  display: flex;
+.btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-.btn:hover{filter:brightness(0.95);}
-.btn:disabled {
-  background: var(--muted);
-  cursor: not-allowed;
-}
-
-.hint{font-size:12px; color:var(--muted);}
-
-/* Table */
-.stock-table-wrap{
-  overflow:auto;
-  border-radius:12px;
-  border:1px solid var(--border-soft);
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#ffffff;
-  font-size:14px;
-}
-th,td{
-  padding:10px;
-  border-bottom:1px solid var(--border);
-  text-align:right;
-  font-variant-numeric:tabular-nums;
-}
-th{
-  color:var(--muted);
-  background:var(--soft);
-}
-th:first-child, td:first-child{ text-align:left; }
-tbody tr:nth-child(even){ background:#f9fafb; }
-
-@media (max-width:480px){
-  .wrap{padding:12px; padding-bottom:20px;}
-  .card{padding:12px; margin-bottom:12px;}
-  th,td{padding:8px; font-size:13px;}
-}
-/* =========================================
-   🌙 ระบบ Dark Mode
-   ========================================= */
-body.dark-mode {
-  --bg: #111827;       /* สีพื้นหลังเว็บ (ดำเทา) */
-  --soft: #1f2937;     /* สีพื้นหลังกล่อง/การ์ด (เทาเข้ม) */
-  --text: #f9fafb;     /* สีตัวอักษร (ขาว) */
-  --muted: #9ca3af;    /* สีตัวอักษรรอง (เทาอ่อน) */
-  --border: #374151;   /* สีเส้นขอบ (เทากลาง) */
-}
-
-/* บังคับสีพื้นหลังให้เปลี่ยนตามตัวแปร */
-body.dark-mode {
-  background-color: var(--bg);
-  color: var(--text);
-}
-
-/* ปุ่มกดสลับโหมด */
-.theme-btn {
-  font-size: 20px;
-  cursor: pointer;
-  background: none;
   border: none;
-  padding: 0 10px;
-  transition: transform 0.2s;
-}
-.theme-btn:hover { transform: scale(1.1); }
-
-/* ⚠️ สำคัญ: คลาสไหนที่เคยตั้งสีขาวตายตัวไว้ ให้เปลี่ยนไปใช้ตัวแปร --soft */
-body.dark-mode .card,
-body.dark-mode .stat-card,
-body.dark-mode .modal-content,
-body.dark-mode header.top-nav {
-  background-color: var(--soft);
-  border-color: var(--border);
-}
-/* =========================================
-   🛠️ ไม้ตาย: ซ่อมสีกล่องและตารางที่ดื้อในโหมดมืด
-   ========================================= */
-
-/* 1. บังคับตารางทั้งหมดไม่ให้สลับสีขาว-ดำ */
-body.dark-mode table,
-body.dark-mode tbody tr,
-body.dark-mode tbody tr:nth-child(odd),
-body.dark-mode tbody tr:nth-child(even),
-body.dark-mode td,
-body.dark-mode th {
-  background-color: transparent !important;
-  color: var(--text) !important;
-  border-color: var(--border) !important;
-}
-
-/* 2. บังคับ Input ทุกตัวในตารางและในการ์ดให้มืดสนิท (แก้ช่องราคา/ช่องกรอกตัวเลขที่ขาวอยู่) */
-body.dark-mode input,
-body.dark-mode select,
-body.dark-mode textarea {
-  background-color: #111827 !important; /* ใช้สีดำเทา */
-  color: #f9fafb !important;            /* ข้อความสีขาว */
-  border: 1px solid #374151 !important; /* เส้นขอบสีเทาเข้ม */
-}
-
-/* ตอนคลิกพิมพ์ให้ขอบสว่างขึ้นนิดนึง */
-body.dark-mode input:focus,
-body.dark-mode select:focus,
-body.dark-mode textarea:focus {
-  border-color: #3b82f6 !important; 
-  outline: none !important;
-}
-
-/* 3. บังคับกล่อง Google Sheet (ที่ถูกฝังสีพื้นหลัง #f8f9fa ไว้ใน HTML) */
-body.dark-mode div[style*="background: #f8f9fa"],
-body.dark-mode div[style*="background:#f8f9fa"] {
-  background-color: #111827 !important;
-  border-color: #374151 !important;
-}
-
-/* 4. ปรับสีข้อความเล็กๆ (Hint) หรือคำอธิบายไม่ให้กลืนหาย */
-body.dark-mode .hint,
-body.dark-mode .muted,
-body.dark-mode label[style*="color: #333"] {
-  color: #9ca3af !important; /* เปลี่ยนเป็นสีเทาอ่อนให้มองเห็นในโหมดมืด */
-}
-
-/* 5. กล่องข้อความพร้อมคัดลอก */
-body.dark-mode .msg {
-  background-color: #111827 !important;
-  border-color: #374151 !important;
-}
-/* =========================================
-   💊 ซ่อมปุ่มวงรี (Pill) และปุ่มเลือก ในโหมดมืด
-   ========================================= */
-
-/* 1. บังคับพื้นหลังและสีตัวอักษรของปุ่มวงรีทั้งหมด */
-body.dark-mode .pill,
-body.dark-mode label.pill,
-body.dark-mode .inline label,
-body.dark-mode .inline span.pill {
-  background-color: #1f2937 !important; /* สีเทาเข้ม (soft) */
-  color: #f9fafb !important;            /* ตัวหนังสือขาว */
-  border: 1px solid #374151 !important; /* ขอบเทา */
-}
-
-/* 2. บังคับสีตัวอักษรข้างในปุ่ม (กรณีเป็นแท็ก span) */
-body.dark-mode .pill span,
-body.dark-mode label.pill span {
-  color: #f9fafb !important;
-}
-
-/* 3. จัดการตอนที่ "เลือก" (Checked) ให้สีเด่นขึ้นมาหน่อย */
-body.dark-mode .pill input:checked + span,
-body.dark-mode label.pill input:checked + span {
-  color: var(--accent) !important; /* ใช้สีหลักของเว็บคุณว๊าฟ */
-  font-weight: bold;
-}
-
-/* 4. ปรับสี Checkbox และ Radio พื้นฐานให้ดูง่ายขึ้น */
-body.dark-mode input[type="checkbox"],
-body.dark-mode input[type="radio"] {
-  filter: invert(1) hue-rotate(180deg); /* กลับสีตัวเลือกให้สว่างขึ้น */
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--text); color: #ffffff; }
+.btn-primary:hover { background: #333333; }
+.btn-secondary { background: #ffffff; color: var(--text); border: 1px solid #cbd5e1; }
+.btn-secondary:hover { background: #f8f9fa; border-color: #94a3b8; }
+.btn:disabled { background: #cbd5e1; cursor: not-allowed; color: #ffffff; }
+
+.hint { font-size: 11px; color: var(--muted); }
+
+/* Tables */
+.stock-table-wrap {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 13px;
+}
+th, td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+th {
+  color: var(--muted);
+  background: #fafafa;
+  font-weight: 600;
+  font-size: 12px;
+}
+th:first-child, td:first-child { text-align: left; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: #fafafa; }
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 2000;
+}
+.modal.open { display: block; }
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+.modal-content {
+  position: relative;
+  z-index: 2001;
+  max-width: 480px;
+  margin: 15vh auto;
+  background: #ffffff;
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid var(--border); background: #fafafa;
+}
+.modal-head h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.modal-close { background: transparent; border: 0; font-size: 24px; cursor: pointer; color: var(--muted); }
+.modal-body { padding: 24px; }
+.modal-actions {
+  display: flex; gap: 12px; justify-content: flex-end;
+  padding: 16px 24px; border-top: 1px solid var(--border); background: #fafafa;
 }
 
-/* 5. ซ่อมพื้นหลังสีขาวที่หลุดมาตรงปุ่มเลือกประเภท */
-body.dark-mode .inline {
-  background-color: transparent !important;
+/* Mobile Settings */
+@media (max-width: 768px) {
+  .menu-toggle { display: block; }
+  .nav-tabs {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: auto;
+    background: #111111;
+    border-top: 1px solid #222222;
+    padding: 0;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  }
+  .nav-tabs.open { display: flex; }
+  .nav-tab {
+    height: auto;
+    padding: 16px 32px;
+    width: 100%;
+    border-bottom: 1px solid #222222;
+    justify-content: flex-start;
+  }
+  .nav-tab.active {
+    border-bottom: 1px solid #222222;
+    border-left: 4px solid var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+@media (max-width: 480px) {
+  .wrap { padding: 14px; }
+  .card { padding: 16px; margin-bottom: 16px; }
+  .top-nav { padding: 0 16px; }
+  .nav-title { font-size: 14px; }
+  .nav-subtitle, .nav-divider { display: none; }
+  .modal-content { margin: 0; width: 100vw; height: 100vh; border-radius: 0; }
 }
